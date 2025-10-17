@@ -456,6 +456,7 @@ function renderList(){
     listDiv.innerHTML += '<p style="opacity:.6;padding:10px;">Aucune donnée.</p>';
   }
 }
+try { document.dispatchEvent(new Event('list:rendered')); } catch {}
 
 
 // --- Tabs ---
