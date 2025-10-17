@@ -1687,9 +1687,11 @@ const Zapper = (() => {
     const copyBtn = document.getElementById('copyBtn');
     const anchor  = (copyBtn && actions.contains(copyBtn)) ? copyBtn : actions.firstChild;
     let prev = document.getElementById('prevBtn');
-    if (!prev){ prev = document.createElement('button'); prev.id='prevBtn'; prev.className='navBtn'; prev.title='Chaîne précédente'; prev.textContent='⟨'; }
+    if (!prev){ prev = document.createElement('button'); prev.id='prevBtn';
+prev.className = 'navBtn btn'; prev.className='navBtn'; prev.title='Chaîne précédente'; prev.textContent='⟨'; }
     let next = document.getElementById('nextBtn');
-    if (!next){ next = document.createElement('button'); next.id='nextBtn'; next.className='navBtn'; next.title='Chaîne suivante'; next.textContent='⟩'; }
+    if (!next){ next = document.createElement('button'); next.id='nextBtn';
+next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suivante'; next.textContent='⟩'; }
     actions.insertBefore(prev, anchor || null);
     actions.insertBefore(next, anchor || null);
     if (!prev.__wired){ prev.__wired = true; prev.addEventListener('click', (e)=>{ e.stopPropagation(); playPrev(); }); }
@@ -1724,3 +1726,13 @@ const Zapper = (() => {
 
 /* === Helper: signal list rendered — call this at the END of your renderList() === */
 /* example: try { document.dispatchEvent(new Event('list:rendered')); } catch {} */
+
+
+// Ensure nav buttons carry Crystal class 'btn' as well
+(function(){
+  var p = document.getElementById('prevBtn');
+  if (p) { if (!p.classList.contains('btn')) p.classList.add('btn'); if (!p.classList.contains('navBtn')) p.classList.add('navBtn'); }
+  var n = document.getElementById('nextBtn');
+  if (n) { if (!n.classList.contains('btn')) n.classList.add('btn'); if (!n.classList.contains('navBtn')) n.classList.add('navBtn'); }
+})();
+
