@@ -1118,44 +1118,56 @@ main, header, footer, aside{ background-color:transparent !important; }
   #nowBar{ column-gap:6px !important; }
   #nowBar .nowbar-actions .navBtn{ min-width:26px !important; height:26px !important; padding:0 6px !important; }
 }
-/* === Harmonise Prev/Next avec les autres boutons de la nowBar === */
-#nowBar .nowbar-actions .navBtn{
-  /* mêmes dimensions & typographie */
-  height: 32px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+/* === FORCE le look des boutons Prev/Next comme les autres === */
+#nowBar .nowbar-actions .navBtn,
+#nowBar .nowbar-actions #prevBtn,
+#nowBar .nowbar-actions #nextBtn,
+#nowBar .nowbar-actions button#prevBtn.navBtn,
+#nowBar .nowbar-actions button#nextBtn.navBtn{
+  /* dimensions & typo */
+  height: 32px !important;
+  padding: 6px 10px !important;
+  min-width: auto !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
 
-  /* mêmes couleurs que les autres actions Crystal */
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
+  /* couleurs Crystal (même look que les autres actions) */
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
 
-  /* confort */
-  cursor: pointer;
-  user-select: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  /* comportement */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  cursor: pointer !important;
+  user-select: none !important;
 
-  /* animation comme les autres */
-  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+  /* transitions */
+  box-shadow: none !important;
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease !important;
 }
 
-#nowBar .nowbar-actions .navBtn:hover{
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+/* Hover identique aux autres boutons de la nowBar */
+#nowBar .nowbar-actions .navBtn:hover,
+#nowBar .nowbar-actions #prevBtn:hover,
+#nowBar .nowbar-actions #nextBtn:hover{
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent) !important;
 }
 
-/* option : compacter un peu en mobile */
+/* Option mobile : compacter un peu */
 @media (max-width: 900px){
-  #nowBar .nowbar-actions .navBtn{
-    height: 28px;
-    padding: 4px 8px;
-    border-radius: 7px;
-    font-size: 13px;
+  #nowBar .nowbar-actions .navBtn,
+  #nowBar .nowbar-actions #prevBtn,
+  #nowBar .nowbar-actions #nextBtn{
+    height: 28px !important;
+    padding: 4px 8px !important;
+    border-radius: 7px !important;
+    font-size: 13px !important;
   }
 }
