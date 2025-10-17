@@ -1437,3 +1437,40 @@ aside .tabs, #catBar { flex: 0 0 auto; }
 @media (max-width: 900px){
   #btnRefresh{ height: 30px; padding: 4px 10px; border-radius: 9px; }
 }
+/* === Taille compacte pour Import rapide & Rafraîchir (comme CC) === */
+#btnImportFast,
+#btnRefresh{
+  height: 28px !important;        /* même hauteur que le bouton CC */
+  padding: 4px 8px !important;    /* compacité identique */
+  border-radius: 7px !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  min-width: auto !important;
+}
+
+/* Si tes contrôles ont une classe commune, on peut compacter visuellement l’écart */
+.controls #btnImportFast,
+.controls #btnRefresh{
+  margin: 0 4px !important;
+}
+
+/* Option : même style “glass” que les autres petits boutons */
+#btnImportFast,
+#btnRefresh{
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,.10)), rgba(255,255,255,.04)) !important;
+  border: var(--stroke, 1px solid rgba(255,255,255,.18)) !important;
+  color: var(--text-strong, #fff) !important;
+  backdrop-filter: blur(calc(var(--blur,16px) - 4px)) !important;
+  -webkit-backdrop-filter: blur(calc(var(--blur,16px) - 4px)) !important;
+  box-shadow: var(--shadow-1, 0 8px 28px rgba(0,0,0,.32)) !important;
+}
+#btnImportFast:hover,
+#btnRefresh:hover{
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent, #3b82f6) 26%, var(--glass-strong, rgba(255,255,255,.10))),
+    rgba(255,255,255,.06)
+  ) !important;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent), var(--shadow-1, 0 8px 28px rgba(0,0,0,.32)) !important;
+}
