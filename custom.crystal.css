@@ -1389,3 +1389,26 @@ aside .tabs, #catBar { flex: 0 0 auto; }
 /* === StreamBoost optional styles === */
 #list .item{ min-height: 64px; }
 .logo-sm img{ display:block; max-width:100%; max-height:100%; object-fit:contain; }
+/* === Style pour le bouton Import rapide ================================== */
+#btnImportFast{
+  height: 34px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,.10)), rgba(255,255,255,.04));
+  border: var(--stroke, 1px solid rgba(255,255,255,.18));
+  color: var(--text-strong, #fff);
+  backdrop-filter: blur(calc(var(--blur,16px) - 4px));
+  -webkit-backdrop-filter: blur(calc(var(--blur,16px) - 4px));
+  box-shadow: var(--shadow-1, 0 8px 28px rgba(0,0,0,.32));
+  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+#btnImportFast:hover{
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent, #3b82f6) 26%, var(--glass-strong, rgba(255,255,255,.10))), rgba(255,255,255,.06));
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent), var(--shadow-1, 0 8px 28px rgba(0,0,0,.32));
+}
+@media (max-width: 900px){
+  #btnImportFast{ height: 30px; padding: 4px 10px; border-radius: 9px; font-weight: 700; }
+}
