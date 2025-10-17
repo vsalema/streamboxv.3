@@ -2070,3 +2070,144 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
     bar.appendChild(b);
   });
 })();
+// === PRE-PING LECTURE SÛRE ================================================
+// Usage: playSafe({ url, name }) au lieu de playByType(url) direct.
+(function(){
+  if (window.__prePingReady) return; window.__prePingReady = true;
+
+  const isHTTPS = location.protocol === 'https:';
+  const $ = s => document.querySelector(s);
+  const say = (m)=>{ try{ (window.toast||window.showToast||console.log)(m); }catch{} };
+
+  function isYouTube(u){ return /(youtube\.com|youtu\.be)\//i.test(u||''); }
+
+  async function prePing(url, timeoutMs=4000){
+    try{
+      // 1) Mixed content
+      if (isHTTPS && /^http:\/\//i.test(url)) {
+        return { ok:false, reason:'mixed', msg:'Lien HTTP bloqué sous HTTPS (contenu mixte).' };
+      }
+      // 2) YouTube -> on laisse passer (sera routé côté lecteur YT)
+      if (isYouTube(url)) return { ok:true, type:'youtube' };
+
+      // 3) Ping réseau (GET petit, CORS)
+      const ctl = new AbortController();
+      const to = setTimeout(()=>ctl.abort(), timeoutMs);
+      let res;
+      try{
+        res = await fetch(url, {
+          method:'GET',
+          mode:'cors',
+          cache:'no-store',
+          redirect:'follow',
+          signal: ctl.signal
+        });
+      } finally {
+        clearTimeout(to);
+      }
+
+      if (!res) return { ok:false, reason:'net', msg:'Aucune réponse du serveur.' };
+
+      // Statuts fréquents
+      if (res.status === 401) return { ok:false, reason:'auth', msg:'Authentification requise (401).' };
+      if (res.status === 403) return { ok:false, reason:'forbidden', msg:'Accès refusé (403). Souvent CORS/géo.' };
+      if (res.status === 404) return { ok:false, reason:'notfound', msg:'Flux introuvable (404).' };
+      if (res.status >= 500) return { ok:false, reason:'server', msg:`Erreur serveur (${res.status}).` };
+
+      // CORS “silencieux” : fetch peut rejeter en TypeError -> catched ci-dessous.
+      // Ici, si on a un 200-299, on laisse jouer :
+      if (res.ok) return { ok:true, status: res.status };
+
+      // Autres codes
+      return { ok:false, reason:'http', msg:`HTTP ${res.status}.` };
+
+    } catch (e){
+      // TypeError (CORS), Abort, etc.
+      const msg = String(e||'');
+      if (/abort/i.test(msg)) return { ok:false, reason:'timeout', msg:'Délai de réponse dépassé.' };
+      // Les erreurs CORS apparaissent souvent ici
+      return { ok:false, reason:'cors', msg:'CORS / Referrer / géo-blocage (navigateur).' };
+    }
+  }
+
+  // Exposé global si besoin ailleurs
+  window.prePing = prePing;
+
+  // Wrapper playSafe : fait le pré-ping puis lance le bon lecteur
+  window.playSafe = async function(item){
+    const url = item?.url || item;
+    const title = item?.name || item?.title || url;
+
+    // Affiche info “test…”
+    try { updateNowBar(`Test du lien…`, url); } catch {}
+    const ps = $('#playerSection');
+    const noSource = $('#noSource');
+    ps && ps.classList.remove('playing'); // évite d’afficher un fond noir si ça échoue
+
+    const r = await prePing(url);
+
+    if (!r.ok){
+      say(`⛔ ${title} — ${r.msg || 'Lien non lisible depuis le navigateur.'}`);
+      try { updateNowBar(`${title} — indisponible`, url); } catch {}
+      // Option: ne pas tenter la lecture si mixed/CORS/403
+      if (r.reason==='mixed' || r.reason==='cors' || r.reason==='forbidden') {
+        noSource && (noSource.style.display='flex');
+        return;
+      }
+      // Sinon, on peut tenter quand même (certains serveurs répondent à la 2e)
+    }
+
+    // OK → on joue
+    try {
+      // Masquer le “noSource”, marquer playing
+      noSource && (noSource.style.display = 'none');
+      ps && ps.classList.add('playing');
+      if (typeof playByType === 'function') playByType(url);
+      try { updateNowBar(title, url); } catch {}
+      // Nudge autoplay pour <video>
+      const v = $('#videoPlayer');
+      if (v && v.style.display === 'block') {
+        v.muted = true;
+        const p = v.play(); if (p && p.catch) p.catch(()=>{});
+      }
+    } catch (err){
+      console.error(err);
+      say('Erreur au lancement du flux.');
+    }
+  };
+
+  // === Intégration CLIC LISTE : remplace la partie qui faisait playByType ===
+  // Trouve la fonction renderList et remplace le handler si besoin :
+  try {
+    const _renderList = window.renderList;
+    window.renderList = function(){
+      _renderList && _renderList();
+      // Rebind click propre (idempotent)
+      const list = document.getElementById('list');
+      if (!list) return;
+      list.querySelectorAll('.item:not([data-preping])').forEach(el=>{
+        el.setAttribute('data-preping','1');
+        el.addEventListener('click', async (e)=>{
+          // Récup infos
+          const url = el.dataset.url || el.querySelector('.name')?.textContent?.trim();
+          const name = el.dataset.name || '';
+          // Stars/favoris conservent leur logique
+          if (e.target && e.target.closest('.star')) return;
+          await window.playSafe({ url, name });
+          try { if (typeof addHistory==='function') addHistory(url); } catch {}
+        });
+      });
+    };
+  } catch {}
+})();
+// Molette verticale -> scroll horizontal sur la AlphaBar (compact)
+(function(){
+  const bar = document.getElementById('alphaBar');
+  if (!bar || bar.__wheelBound) return; bar.__wheelBound = true;
+  bar.addEventListener('wheel', (e)=>{
+    if (Math.abs(e.deltaY) > 0 && bar.scrollWidth > bar.clientWidth){
+      bar.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  }, { passive:false });
+})();
