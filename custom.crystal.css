@@ -1474,3 +1474,29 @@ aside .tabs, #catBar { flex: 0 0 auto; }
   border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent), var(--shadow-1, 0 8px 28px rgba(0,0,0,.32)) !important;
 }
+/* — Forcer un format compact pour Import rapide & Rafraîchir — */
+
+/* S'ils sont DANS la nowBar */
+#nowBar .nowbar-actions button#btnImportFast,
+#nowBar .nowbar-actions button#btnRefresh {
+  min-width: 28px !important;
+  height: 26px !important;
+  padding: 3px 6px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+/* S'ils sont HORS de la nowBar (ex. dans le header .controls) */
+#btnImportFast,
+#btnRefresh {
+  min-width: 28px !important;
+  height: 26px !important;
+  padding: 3px 6px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+/* Optionnel : réduire aussi l’icône/emoji si besoin */
+#btnImportFast, #btnRefresh { letter-spacing: 0 !important; }
