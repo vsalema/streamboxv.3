@@ -1343,3 +1343,13 @@ main, header, footer, aside{ background-color:transparent !important; }
     font-size: 13px !important;
   }
 }
+
+
+/* --- Empêcher la nowBar d'être poussée par la liste --- */
+
+/* Garantit un viewport fixe pour la grille */
+html, body { height: 100%; }
+body { overflow: hidden; } /* on bloque le scroll global */
+
+/* La zone centrale occupe
+   
