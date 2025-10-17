@@ -1751,3 +1751,51 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
   window.addEventListener('resize', apply);
   setTimeout(apply, 300);
 })();
+// === Import rapide : utilise StreamBoost Lite s'il est présent =============
+(function(){
+  const btn = document.getElementById('btnImportFast');
+  const input = document.getElementById('urlInput');
+  if (!btn || !input || btn.__wiredFast) return;
+  btn.__wiredFast = true;
+
+  btn.addEventListener('click', async (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const url = (input.value || '').trim();
+    if (!url){
+      try{ toast('Entrez une URL M3U/M3U8'); }catch(_){ alert('Entrez une URL M3U/M3U8'); }
+      return;
+    }
+    if (!window.StreamBoostLite){
+      const legacy = document.getElementById('btnImportUrl');
+      if (legacy) { legacy.click(); return; }
+      if (typeof playByType === 'function'){ playByType(url); try{ updateNowBar(url, url); }catch(_){ } }
+      return;
+    }
+
+    const listEl = document.getElementById('list');
+    if (listEl) listEl.innerHTML = '';
+
+    const onItems = StreamBoostLite.renderBatcher(
+      listEl,
+      StreamBoostLite.defaultRenderItem
+    );
+    function setNow(t){ try{ updateNowBar(t, url); }catch(_){ } }
+
+    setNow('Import en cours…');
+
+    try{
+      await StreamBoostLite.importM3U(url, {
+        onItems,
+        onProgress(count){ setNow(`Import… ${count.toLocaleString('fr-FR')} chaînes`); },
+        onDone({count, error}){
+          setNow(error ? 'Erreur import' : `Import terminé — ${count.toLocaleString('fr-FR')} chaînes`);
+          StreamBoostLite.enableLazyLogos(listEl);
+        },
+        chunkSize: 300
+      });
+    }catch(err){
+      console.error('[Import rapide]', err);
+      try{ toast('Erreur import'); }catch(_){}
+    }
+  });
+})();
