@@ -32,6 +32,11 @@
         Importer fichier M3U
       </label>
       <button id="btnRefresh" title="Rafraîchir la page">🔄</button>
+      <button id="btnExport" title="Exporter réglages">⬇︎ Export</button>
+      <label class="fileLabel" title="Importer réglages">
+        ⬆︎ Import
+        <input id="fileImportSettings" type="file" accept="application/json">
+      </label>
       <button id="themeToggle" title="Changer de thème">🌗</button>
     </div>
   </header>
@@ -46,6 +51,7 @@
       </div>
       <div id="catBar"></div>
       <input id="searchInput" placeholder="Rechercher une chaîne..." />
+      <div id="alphaBar" aria-label="Alphabet nav"></div>
       <div id="list"></div>
     </aside>
 

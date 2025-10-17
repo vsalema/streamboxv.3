@@ -1969,3 +1969,104 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
 
   console.log('[YT Patch] Autoplay+Unmute prêt');
 })();
+
+
+// === Shortcuts: Prev/Next/F/Enter =========================================
+(function setupShortcuts(){
+  if (window.__shortcutsReady) return; window.__shortcutsReady = true;
+
+  function goPrev(){ try{ document.getElementById('prevBtn')?.click(); }catch{} }
+  function goNext(){ try{ document.getElementById('nextBtn')?.click(); }catch{} }
+  function goFS(){
+    const v = document.getElementById('videoPlayer');
+    const y = document.getElementById('ytPlayer');
+    const target = (v && v.style.display==='block') ? v : y;
+    if (!target) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    else target.requestFullscreen?.();
+  }
+  function playSelected(){
+    const active = document.querySelector('#list .item.active');
+    if (active) active.click();
+  }
+
+  document.addEventListener('keydown', (e)=>{
+    if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+    if (e.key === 'ArrowLeft'){ e.preventDefault(); goPrev(); }
+    if (e.key === 'ArrowRight'){ e.preventDefault(); goNext(); }
+    if (e.key?.toLowerCase() === 'f'){ e.preventDefault(); goFS(); }
+    if (e.key === 'Enter'){ playSelected(); }
+  }, { passive:false });
+})();
+
+
+// === Export / Import des réglages ==========================================
+(function settingsBackup(){
+  if (window.__backupReady) return; window.__backupReady = true;
+
+  window.exportSettings = function(){
+    const data = {
+      ts: Date.now(),
+      favorites: JSON.parse(localStorage.getItem('iptv.favorites') || '[]'),
+      history: JSON.parse(localStorage.getItem('iptv.history') || '[]'),
+      playlists: JSON.parse(localStorage.getItem('iptv.playlists') || '[]'),
+      theme: localStorage.getItem('theme') || 'dark'
+    };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'iptv-webplus-backup.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  };
+
+  window.importSettings = async function(file){
+    try{
+      const txt = await file.text();
+      const data = JSON.parse(txt);
+      if (data.favorites) localStorage.setItem('iptv.favorites', JSON.stringify(data.favorites));
+      if (data.history)   localStorage.setItem('iptv.history', JSON.stringify(data.history));
+      if (data.playlists) localStorage.setItem('iptv.playlists', JSON.stringify(data.playlists));
+      if (data.theme){ localStorage.setItem('theme', data.theme);
+        document.body.classList.toggle('light', data.theme==='light');
+      }
+      if (typeof renderList === 'function') renderList();
+      try{ (window.toast||window.showToast||console.log)('Réglages restaurés'); }catch{}
+    }catch(e){ console.error(e); try{ (window.toast||window.showToast||console.log)('Import de réglages invalide'); }catch{} }
+  };
+
+  const b = document.getElementById('btnExport');
+  const f = document.getElementById('fileImportSettings');
+  if (b && !b.__wired){ b.__wired = true; b.addEventListener('click', ()=>exportSettings()); }
+  if (f && !f.__wired){ f.__wired = true; f.addEventListener('change', e=>{
+    const file = e.target.files?.[0]; if (file) importSettings(file);
+    e.target.value = '';
+  });}
+})();
+
+
+// === Barre A–Z pour sauter dans la liste ==================================
+(function alphaNav(){
+  if (window.__alphaReady) return; window.__alphaReady = true;
+  const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+  const bar = document.getElementById('alphaBar');
+  const list = document.getElementById('list');
+  if (!bar || !list) return;
+  bar.innerHTML = '';
+  alpha.forEach(ch=>{
+    const b = document.createElement('button');
+    b.className = 'az'; b.textContent = ch;
+    b.onclick = ()=>{
+      const items = list.querySelectorAll('.item .name');
+      let target = null;
+      for (const el of items){
+        const t = (el.textContent||'').trim().toUpperCase();
+        const isDigit = /^[0-9]/.test(t);
+        if (ch === '#'){ if (isDigit){ target = el.closest('.item'); break; } }
+        else if (t.startsWith(ch)){ target = el.closest('.item'); break; }
+      }
+      if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+    bar.appendChild(b);
+  });
+})();
