@@ -1412,3 +1412,28 @@ aside .tabs, #catBar { flex: 0 0 auto; }
 @media (max-width: 900px){
   #btnImportFast{ height: 30px; padding: 4px 10px; border-radius: 9px; font-weight: 700; }
 }
+/* Bouton Rafraîchir (Crystal) */
+#btnRefresh{
+  height: 34px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,.10)), rgba(255,255,255,.04));
+  border: var(--stroke, 1px solid rgba(255,255,255,.18));
+  color: var(--text-strong, #fff);
+  backdrop-filter: blur(calc(var(--blur,16px) - 4px));
+  -webkit-backdrop-filter: blur(calc(var(--blur,16px) - 4px));
+  box-shadow: var(--shadow-1, 0 8px 28px rgba(0,0,0,.32));
+  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .06s ease;
+}
+#btnRefresh:hover{
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent, #22c55e) 26%, var(--glass-strong, rgba(255,255,255,.10))), rgba(255,255,255,.06));
+  border-color: color-mix(in srgb, var(--accent, #22c55e) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #22c55e) 22%, transparent), var(--shadow-1, 0 8px 28px rgba(0,0,0,.32));
+}
+#btnRefresh:active{ transform: translateY(1px); }
+
+@media (max-width: 900px){
+  #btnRefresh{ height: 30px; padding: 4px 10px; border-radius: 9px; }
+}
