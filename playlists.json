@@ -1,6 +1,10 @@
 {
   "playlists": [
     {
+      "name": "France TV 🇫🇷",
+      "url": "https://raw.githubusercontent.com/vsalema/tvpt4/refs/heads/main/css/TVradioZap-TV-Europe%2B_s_2024-12-27.m3u"
+    },
+    {
       "name": "Exemple IPTV Public",
       "url": "https://iptv-org.github.io/iptv/index.m3u"
     },
