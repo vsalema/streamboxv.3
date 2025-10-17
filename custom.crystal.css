@@ -1284,3 +1284,62 @@ main, header, footer, aside{ background-color:transparent !important; }
     font-size: 13px !important;
   }
 }
+/* === Override final : Prev/Next en look Crystal/glass === */
+#nowBar.nowbar .nowbar-actions button#prevBtn.navBtn,
+#nowBar.nowbar .nowbar-actions button#nextBtn.navBtn,
+#nowBar.nowbar .nowbar-actions button#prevBtn.navBtn.btn,
+#nowBar.nowbar .nowbar-actions button#nextBtn.navBtn.btn{
+  /* même base que .nowbar button, .fileLabel */
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,.08)), rgba(255,255,255,.04)) !important;
+  border: var(--stroke, 1px solid rgba(255,255,255,.14)) !important;
+  color: var(--text-strong, #fff) !important;
+  backdrop-filter: blur(calc(var(--blur, 14px) - 4px)) !important;
+  -webkit-backdrop-filter: blur(calc(var(--blur, 14px) - 4px)) !important;
+  box-shadow: var(--shadow-1, 0 6px 18px rgba(0,0,0,.25)) !important;
+
+  /* gabarit harmonisé */
+  height: 32px !important;
+  padding: 6px 10px !important;
+  min-width: auto !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
+
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease !important;
+}
+
+/* Hover identique aux autres boutons “glass” */
+#nowBar.nowbar .nowbar-actions button#prevBtn.navBtn:hover,
+#nowBar.nowbar .nowbar-actions button#nextBtn.navBtn:hover,
+#nowBar.nowbar .nowbar-actions button#prevBtn.navBtn.btn:hover,
+#nowBar.nowbar .nowbar-actions button#nextBtn.navBtn.btn:hover{
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent, #3b82f6) 26%, var(--glass-strong, rgba(255,255,255,.08))),
+    rgba(255,255,255,.06)
+  ) !important;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent) !important;
+}
+
+/* Mobile compact */
+@media (max-width: 900px){
+  #nowBar.nowbar .nowbar-actions button#prevBtn.navBtn,
+  #nowBar.nowbar .nowbar-actions button#nextBtn.navBtn,
+  #nowBar.nowbar .nowbar-actions button#prevBtn.navBtn.btn,
+  #nowBar.nowbar .nowbar-actions button#nextBtn.navBtn.btn{
+    height: 28px !important;
+    padding: 4px 8px !important;
+    border-radius: 7px !important;
+    font-size: 13px !important;
+  }
+}
