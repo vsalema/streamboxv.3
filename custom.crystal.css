@@ -1214,3 +1214,73 @@ main, header, footer, aside{ background-color:transparent !important; }
     font-size: 13px !important;
   }
 }
+/* === Prev/Next = même aspect que .nowbar button / .fileLabel (Crystal glass) === */
+#nowBar .nowbar-actions button.navBtn,
+#nowBar .nowbar-actions #prevBtn,
+#nowBar .nowbar-actions #nextBtn{
+  /* mêmes bases visuelles que .nowbar button, .fileLabel */
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,0.08)), rgba(255,255,255,0.04)) !important;
+  border: var(--stroke, 1px solid rgba(255,255,255,0.14)) !important;
+  color: var(--text-strong, #fff) !important;
+  backdrop-filter: blur(calc(var(--blur, 14px) - 4px)) !important;
+  -webkit-backdrop-filter: blur(calc(var(--blur, 14px) - 4px)) !important;
+  box-shadow: var(--shadow-1, 0 6px 18px rgba(0,0,0,.25)) !important;
+
+  /* gabarit identique aux autres boutons */
+  height: 32px !important;
+  min-width: 32px !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+
+  /* comportement */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  pointer-events: auto !important;
+
+  /* reset de styles antérieurs */
+  box-sizing: border-box !important;
+  text-shadow: none !important;
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, transform .06s ease !important;
+}
+
+/* Hover / focus : même montée d'accent que les autres boutons */
+#nowBar .nowbar-actions button.navBtn:hover,
+#nowBar .nowbar-actions #prevBtn:hover,
+#nowBar .nowbar-actions #nextBtn:hover,
+#nowBar .nowbar-actions button.navBtn:focus-visible,
+#nowBar .nowbar-actions #prevBtn:focus-visible,
+#nowBar .nowbar-actions #nextBtn:focus-visible{
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent, #3b82f6) 26%, var(--glass-strong, rgba(255,255,255,0.08))),
+    rgba(255,255,255,0.06)
+  ) !important;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent) !important;
+}
+
+/* Active: petit feedback appuyé */
+#nowBar .nowbar-actions button.navBtn:active,
+#nowBar .nowbar-actions #prevBtn:active,
+#nowBar .nowbar-actions #nextBtn:active{
+  transform: translateY(1px) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent) inset !important;
+}
+
+/* Variante mobile compacte */
+@media (max-width: 900px){
+  #nowBar .nowbar-actions button.navBtn,
+  #nowBar .nowbar-actions #prevBtn,
+  #nowBar .nowbar-actions #nextBtn{
+    height: 28px !important;
+    padding: 4px 8px !important;
+    border-radius: 7px !important;
+    font-size: 13px !important;
+  }
+}
