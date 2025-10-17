@@ -1,0 +1,12 @@
+{
+  "playlists": [
+    {
+      "name": "Movies",
+      "url": "https://vsalema.github.io/tvpt4/css/movies.m3u"
+    },
+    {
+      "name": "Demos Streams (HLS)",
+      "url": "https://iptv-org.github.io/iptv/index.category.m3u"
+    }
+  ]
+}

@@ -1,0 +1,1063 @@
+/* =====================================================================
+   IPTV Player — custom.crystal.css
+   - Thème "cristal" (glassmorphism) moderne
+   - Player unifié (video/iframe/audio)
+   - Splash Clean (auto-hide fiable)
+   - nowBar centrée + largeur max
+   - Outils: bouton Effacer historique + toast
+   ===================================================================== */
+
+:root {
+  --bg-crystal: radial-gradient(1200px 800px at 10% -10%, #1e2636 0%, #0b0f18 45%, #06080e 100%);
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-stroke: rgba(255,255,255,0.18);
+  --glass-hover: rgba(255,255,255,0.12);
+  --glass-strong: rgba(255,255,255,0.16);
+  --blur: 14px;
+
+  --accent: #7dd3fc;
+  --accent-2: #38bdf8;
+  --accent-glow: 0 0 18px rgba(125,211,252,.45);
+
+  --text-strong: #edf2f7;
+  --text-soft: #bac7d3;
+
+  --stroke: 1px solid var(--glass-stroke);
+  --shadow-1: 0 10px 30px rgba(0,0,0,.35);
+  --shadow-2: 0 30px 60px rgba(0,0,0,.35);
+}
+
+body { background: var(--bg-crystal) !important; color: var(--text-strong) !important; }
+
+header, aside {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--blur)) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(120%) !important;
+  border-bottom: var(--stroke);
+  box-shadow: var(--shadow-1);
+}
+
+.item {
+  background: var(--glass-bg) !important;
+  border: var(--stroke) !important;
+  backdrop-filter: blur(calc(var(--blur) - 2px)) !important;
+  -webkit-backdrop-filter: blur(calc(var(--blur) - 2px)) !important;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.item:hover {
+  background: var(--glass-hover) !important;
+  border-color: var(--accent-2) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--accent-glow), var(--shadow-1);
+}
+
+button, .nowbar a, .nowbar button, .fileLabel {
+  background: linear-gradient(180deg, var(--glass-strong), rgba(255,255,255,0.04)) !important;
+  border: var(--stroke) !important;
+  color: var(--text-strong) !important;
+  backdrop-filter: blur(calc(var(--blur) - 4px)) !important;
+  -webkit-backdrop-filter: blur(calc(var(--blur) - 4px)) !important;
+  box-shadow: var(--shadow-1);
+}
+button:hover, .nowbar a:hover, .nowbar button:hover, .fileLabel:hover {
+  border-color: var(--accent-2) !important;
+  box-shadow: var(--accent-glow), var(--shadow-1);
+}
+
+.tabs button { background: var(--glass-bg) !important; border-bottom: 2px solid transparent !important; }
+.tabs button.active {
+  border-color: var(--accent-2) !important;
+  color: var(--text-strong) !important;
+  text-shadow: 0 0 6px rgba(125,211,252,.35);
+}
+
+.logo-sm { background: rgba(255,255,255,.08) !important; border: var(--stroke); }
+#catBar .cat { background: var(--glass-bg) !important; border: var(--stroke); }
+#catBar .cat.active {
+  background: linear-gradient(180deg, rgba(56,189,248,.35), rgba(56,189,248,.15));
+  color:#fff; border-color: var(--accent-2);
+}
+
+/* PLAYER */
+#playerSection {
+  position: relative !important;
+  display: block !important;
+  background: rgba(0,0,0,.55) !important;
+  overflow: hidden !important;
+  border: var(--stroke);
+  box-shadow: var(--shadow-2);
+}
+#playerSection > video,
+#playerSection > iframe,
+#playerSection > audio {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: none;
+  background: #000 !important;
+  object-fit: contain !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
+  z-index: 1;
+}
+#ytPlayer { aspect-ratio: auto; }
+
+#noSource {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 0 !important;
+  pointer-events: none;
+  opacity: .85;
+}
+#playerSection.playing #noSource { display: none !important; }
+
+/* NOW BAR */
+footer { height: 64px; font-size: 0; border-top: none; text-align: center; }
+#nowBar {
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(1200px, calc(100vw - 24px)) !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  z-index: 1000 !important;
+  pointer-events: none !important;
+  box-sizing: border-box !important;
+
+  background: rgba(8,12,20,.55);
+  border: var(--stroke);
+  backdrop-filter: blur(calc(var(--blur) - 4px));
+  -webkit-backdrop-filter: blur(calc(var(--blur) - 4px));
+  box-shadow: var(--accent-glow), var(--shadow-1);
+  color: var(--text-strong);
+}
+#nowBar .nowbar-actions > *, #nowBar a, #nowBar button { pointer-events: auto !important; }
+main { padding-bottom: 16px !important; overflow: hidden; }
+@media (max-width: 900px) { #nowBar { bottom: 64px; } }
+
+/* SPLASH Clean */
+#splash {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: grid; place-items: center;
+  background: rgba(0,0,0,0.85);
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transition: opacity .35s ease;
+}
+#splash.hidden { opacity: 0 !important; pointer-events: none !important; }
+#splash .splash-card {
+  display: grid; justify-items: center; gap: 8px;
+  background: rgba(16,20,28,.75);
+  border: var(--stroke);
+  backdrop-filter: blur(calc(var(--blur) + 2px));
+  -webkit-backdrop-filter: blur(calc(var(--blur) + 2px));
+  box-shadow: var(--accent-glow), var(--shadow-2);
+  min-width: 220px; padding: 18px 22px; border-radius: 14px;
+}
+#splash .splash-logo { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 0 10px var(--accent)); }
+#splash .splash-title { color:#fff; font-weight: 700; letter-spacing:.4px; }
+#splash .splash-sub { color:#ddd; font-size:.9rem; opacity:.9; }
+#splash .splash-spinner {
+  width: 28px; height: 28px;
+  border: 3px solid rgba(255,255,255,.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: splash-spin .9s linear infinite;
+  margin-top: 6px;
+}
+@keyframes splash-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  #splash, #splash .splash-spinner { animation: none !important; }
+  #splash { transition: none !important; }
+}
+
+/* Historique + Toast */
+.history-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 4px;
+}
+.btn-danger {
+  background: #ef4444; color: #fff; border: 0; border-radius: 8px;
+  padding: 6px 10px; cursor: pointer; font-weight: 600;
+}
+.btn-danger:hover { opacity: .9; }
+.toast {
+  position: fixed; left:50%; transform: translateX(-50%);
+  bottom: 20px; background: rgba(0,0,0,.85); color:#fff;
+  padding: 10px 14px; border-radius: 10px; z-index: 10000;
+}
+/* === Crystal — variante claire === */
+body.light {
+  --bg-crystal: radial-gradient(1200px 800px at 10% -10%, #f7fbff 0%, #ecf3ff 45%, #e9f0ff 100%);
+  --glass-bg: rgba(255,255,255,0.55);
+  --glass-stroke: rgba(0,0,0,0.08);
+  --glass-hover: rgba(255,255,255,0.7);
+  --glass-strong: rgba(255,255,255,0.75);
+  --blur: 14px;
+
+  --accent: #2563eb;
+  --accent-2: #3b82f6;
+  --accent-glow: 0 0 18px rgba(37,99,235,.35);
+
+  --text-strong: #0f172a;
+  --text-soft: #334155;
+  --stroke: 1px solid var(--glass-stroke);
+}
+
+/* Ajuste vite le player/nowBar pour contraste en clair */
+body.light #playerSection {
+  background: rgba(255,255,255,0.65) !important;
+}
+body.light #nowBar {
+  background: rgba(255,255,255,0.55) !important;
+  color: var(--text-strong) !important;
+}
+
+/* === Fix layout nowBar: titre + actions alignés sans chevauchement === */
+#nowBar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding: 8px 10px !important;
+  pointer-events: none !important; /* on garde le pass-through global */
+  box-sizing: border-box !important;
+}
+
+/* Titre: prend la place dispo, ellipsé si trop long */
+#nowTitle {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;              /* clé pour activer ellipsis en flex */
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  margin-right: 8px !important;
+  pointer-events: auto !important;       /* au cas où click copy titre, etc. */
+}
+
+/* Zone actions à droite */
+#nowBar .nowbar-actions {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  pointer-events: auto !important;       /* boutons cliquables */
+}
+
+/* Boutons/links de la barre */
+#nowBar .nowbar-actions > *,
+#nowBar a,
+#nowBar button {
+  flex: 0 0 auto !important;
+  pointer-events: auto !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+}
+
+/* (optionnel) taille minimale pour des boutons carrés harmonieux */
+#fsBtn, #copyBtn {
+  min-width: 38px !important;
+  text-align: center !important;
+}
+
+/* Menu pistes audio (nowBar) */
+#audioBtn { min-width: 42px; }
+#audioMenu {
+  position: absolute;
+  right: 0;
+  bottom: 42px;
+  background: rgba(15,18,26,.92);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 180px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  z-index: 2000;
+}
+#audioMenu .am-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #fff;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#audioMenu .am-item:hover { background: rgba(255,255,255,.12); }
+#audioMenu .am-item.sel { background: rgba(56,189,248,.25); }
+#audioMenu .am-item .am-lang { opacity: .7; font-size: .85em; }
+.am-empty { color:#cbd5e1; padding: 8px 10px; }
+/* Menu sous-titres (nowBar) */
+#subsBtn { min-width: 42px; }
+#subsMenu {
+  position: absolute;
+  right: 0;
+  bottom: 42px; /* au-dessus de la nowBar */
+  background: rgba(15,18,26,.92);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 200px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  z-index: 2000;
+}
+#subsMenu .sm-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #fff;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#subsMenu .sm-item:hover { background: rgba(255,255,255,.12); }
+#subsMenu .sm-item.sel { background: rgba(56,189,248,.25); }
+#subsMenu .sm-item .sm-lang { opacity: .7; font-size: .85em; }
+/* --- Ping badge dans la liste --- */
+.ping-badge {
+  display:inline-block; width:10px; height:10px; border-radius:50%;
+  margin-left:8px; vertical-align:middle; background:#777; /* inconnu */
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15);
+}
+.ping-ok    { background: #22c55e; }   /* vert */
+.ping-warn  { background: #f59e0b; }   /* orange */
+.ping-bad   { background: #ef4444; }   /* rouge */
+.ping-spin  { background: #999; animation: pingspin 1s linear infinite; }
+@keyframes pingspin { to { transform: rotate(360deg); } }
+
+/* --- Stats overlay (dans le player) --- */
+#statsOverlay {
+  position:absolute; top:10px; right:10px; z-index: 1100;
+  background: rgba(0,0,0,.65); color:#fff; font: 12px/1.35 system-ui, sans-serif;
+  border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 8px 10px;
+  max-width: 42ch; pointer-events: none; white-space: pre-line;
+}
+#statsOverlay.hidden { display: none; }
+#statsOverlay .title { font-weight:700; margin-bottom: 4px; display:block; }
+/* === FIX: le logo d'entête ne doit JAMAIS s'étirer === */
+header .logo { display:flex; align-items:center; flex:0 0 auto; }
+
+header .header-logo,
+header .logo img {
+  width: auto !important;
+  max-width: 60px !important;   /* ajuste 48–72px si tu veux */
+  height: 40px !important;      /* hauteur fixe du logo */
+  max-height: 44px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+}
+
+/* Si tu as une règle globale type img{width:100%}, on l'annule ici */
+header img { width: auto !important; }
+
+/* Sécurité: le header ne « grandit » pas avec l’image */
+header { min-height: 56px; }
+/* ===================== LAYOUT RESCUE PATCH ===================== */
+/* Base saine */
+html, body { height: 100% !important; }
+body {
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Header stable + logo non extensible */
+header {
+  position: relative !important;
+  z-index: 10 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: var(--bg-alt) !important;
+}
+header .logo { display:flex !important; align-items:center !important; flex:0 0 auto !important; }
+header .header-logo, header .logo img {
+  width: auto !important; height: 40px !important; max-height: 44px !important;
+  max-width: 60px !important; object-fit: contain !important; display: inline-block !important;
+}
+header img { width: auto !important; } /* annule img{width:100%} global */
+
+/* Grille principale : colonne gauche + player */
+main {
+  position: relative !important;
+  z-index: 1 !important;
+  flex: 1 1 auto !important;
+  display: grid !important;
+  grid-template-columns: 360px 1fr !important;
+  min-height: 0 !important;
+  overflow: hidden !important; /* rien ne doit déborder hors du main */
+}
+
+/* Colonne gauche (listes/catégories) */
+aside {
+  position: relative !important;
+  background: var(--bg-alt) !important;
+  border-right: 1px solid var(--border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+#catBar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: 40px !important;
+  flex: 0 0 auto !important;
+}
+#catBar::-webkit-scrollbar { display: none; }
+#list {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  padding: 6px !important;
+}
+
+/* Zone player à droite */
+#playerSection {
+  position: relative !important;
+  background: #000 !important;
+  min-height: 300px !important;
+  overflow: hidden !important;
+}
+#playerSection > video,
+#playerSection > iframe,
+#playerSection > audio {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important; height: 100% !important;
+  object-fit: contain !important;
+  display: none; background: #000 !important; z-index: 1;
+}
+#noSource {
+  position: absolute !important; inset: 0 !important;
+  display: flex !important; align-items:center !important; justify-content:center !important;
+  z-index: 0 !important; pointer-events: none !important;
+}
+#playerSection.playing #noSource { display: none !important; }
+
+/* NowBar en bas, sans casser les clics sur le player */
+footer { height: 64px !important; font-size: 0 !important; border-top: none !important; background: transparent !important; }
+#nowBar {
+  position: fixed !important; left: 12px !important; right: 12px !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  z-index: 1000 !important; pointer-events: none !important;
+  display: flex !important; gap: 8px !important; align-items: center !important;
+}
+#nowTitle {
+  flex: 1 1 auto !important; min-width: 0 !important;
+  overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
+}
+#nowBar .nowbar-actions { flex: 0 0 auto !important; display:flex !important; gap:8px !important; }
+#nowBar .nowbar-actions > *, #nowBar a, #nowBar button { pointer-events: auto !important; }
+
+/* Évite les positions absolues globales qui cassent tout */
+body > * { position: static; } /* header/main/footer restent gérés par leurs règles ci-dessus */
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr !important; }
+  aside { height: 260px !important; }
+}
+/* === NOWBAR FIX (taille & alignement) === */
+#nowBar {
+  font-size: 14px !important;              /* annule l’héritage de footer */
+  position: fixed; left: 12px; right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  pointer-events: none;                     /* on laisse les boutons cliquer… */
+}
+#nowBar .nowbar-actions {                  /* …mais seulement eux ont les clics */
+  pointer-events: auto;
+  display: flex !important;
+  gap: 8px !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  margin-left: auto !important;            /* pousse les actions à droite */
+}
+#nowTitle {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* === TAILLES UNIFORMES DES BOUTONS/INPUTS === */
+button, input, select {
+  font-size: 14px !important;              /* évite les mini-tailles héritées */
+  line-height: 1 !important;
+  height: 36px !important;                 /* taille confortable */
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+}
+#nowBar button, #nowBar a {
+  height: 34px !important;                 /* un peu plus compacts dans la barre */
+  min-width: 38px !important;
+  font-size: 14px !important;
+}
+
+/* icônes FS et menus audio/subs */
+#fsBtn, #fsPageBtn, #audioBtn, #subsBtn { min-width: 38px !important; text-align: center; }
+
+/* Sécurité : l’input de recherche en sidebar ne doit pas déborder */
+aside input#searchInput {
+  height: 34px !important;
+  font-size: 14px !important;
+}
+
+/* Optionnel : si quelque part tu avais font-size:0; sur footer, garde-le mais
+   on s’assure que #nowBar ne l’hérite pas (déjà réglé via font-size ci-dessus) */
+
+/* ===== SAFE DELTA: n'affecte que la liste, la nowBar et les catégories ===== */
+
+/* 1) Liste des chaînes — structure et tailles stables */
+#list { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 6px; }
+.item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: transparent; padding: 8px 10px; margin-bottom: 6px;
+}
+.item .left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo-sm { width: 28px; height: 28px; flex: 0 0 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; overflow: hidden; background: #222;
+}
+.logo-sm img { width: 100%; height: 100%; object-fit: contain; }
+.item .title, .item .name {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.item .star { flex: 0 0 auto; }
+
+/* 2) Catégories — une ligne, scroll horizontal compact */
+#catBar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; white-space: nowrap;
+  overflow-x: auto; overflow-y: hidden; max-height: 40px; flex: 0 0 auto;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+#catBar::-webkit-scrollbar { display: none; }
+#catBar .cat {
+  display: inline-flex; align-items: center; height: 28px;
+  padding: 0 10px; font-size: 12px; border-radius: 999px; flex: 0 0 auto;
+}
+
+/* 3) NowBar — taille lisible et actions à droite */
+#nowBar {
+  font-size: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  pointer-events: none;
+}
+#nowTitle { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#nowBar .nowbar-actions { pointer-events: auto; display: flex; gap: 8px; margin-left: auto; }
+
+/* 4) Taille uniforme des contrôles (évite les mini-boutons) */
+button, input, select { font-size: 14px; height: 36px; padding: 0 12px; border-radius: 8px; }
+#nowBar button, #nowBar a { height: 34px; min-width: 38px; }
+
+/* 5) Sécurité : le logo du header ne s'étire pas */
+header .header-logo, header .logo img {
+  width: auto; height: 40px; max-height: 44px; max-width: 60px; object-fit: contain;
+}
+/* === NOWBAR: remettre le titre à gauche et les actions à droite === */
+#nowBar{
+  position: fixed;        /* si déjà fixé, ne change rien */
+  left: 12px; right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  font-size: 14px !important;        /* annule footer{font-size:0} si présent */
+  pointer-events: none;               /* on laisse passer… */
+  width: auto;                        /* évite rétrécissement */
+}
+#nowTitle{
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+#nowBar .nowbar-actions{
+  display: flex !important;
+  gap: 8px !important;
+  margin-left: auto !important;       /* pousse à droite */
+  flex: 0 0 auto !important;
+  pointer-events: auto;               /* …mais les boutons restent cliquables */
+}
+
+/* Sécurité: si quelqu’un a mis text-align:left partout */
+#nowBar, #nowBar .nowbar-actions { text-align: initial !important; }
+
+/* Boutons compacts et uniformes */
+#nowBar button, #nowBar a{
+  min-width: 38px; height: 34px;
+}
+/* NOWBAR en grille: titre à gauche, actions à droite */
+#nowBar{
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  column-gap: 8px !important;
+  font-size: 14px !important;   /* annule un éventuel footer{font-size:0} */
+  pointer-events: none;
+  z-index: 1000;
+}
+#nowTitle{
+  min-width: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+#nowBar .nowbar-actions{
+  display: inline-flex !important;
+  gap: 8px !important;
+  justify-self: end !important;   /* colle à droite */
+  pointer-events: auto;           /* boutons cliquables */
+}
+#nowBar button, #nowBar a{ min-width: 38px; height: 34px; }
+/* === NOWBAR FINAL OVERRIDE (écrase les anciennes règles) ================ */
+#nowBar{
+  position: fixed !important;
+  left: 12px !important;
+  right: 12px !important;
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  transform: none !important;
+  width: auto !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  column-gap: 8px !important;
+  font-size: 14px !important;
+  pointer-events: none !important;
+  z-index: 1000 !important;
+}
+#nowTitle{
+  min-width: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+#nowBar .nowbar-actions{
+  display: inline-flex !important;
+  gap: 8px !important;
+  justify-self: end !important;
+  pointer-events: auto !important;
+}
+#nowBar button, #nowBar a{
+  min-width: 38px !important;
+  height: 34px !important;
+}
+/* === TABS: 1 seule ligne, tailles stables === */
+.tabs{
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  flex-wrap: nowrap !important;          /* empêche le retour à la ligne */
+}
+
+/* Boutons d’onglets (les 4) */
+.tabs .tab-btn,
+.tabs button:not(#btnVerifyLinks){
+  flex: 0 0 auto !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+  line-height: 1 !important;
+}
+
+/* Bouton “Vérifier les liens” : compact et aligné à droite */
+#btnVerifyLinks{
+  margin-left: auto !important;          /* pousse à droite */
+  height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  border-radius: 999px !important;
+  flex: 0 0 auto !important;
+}
+
+/* Input de recherche: largeur contrôlée, pas “plus large” */
+aside input#searchInput{
+  display: block !important;
+  width: calc(100% - 16px) !important;
+  margin: 8px !important;
+  height: 34px !important;
+  font-size: 14px !important;
+  box-sizing: border-box !important;
+}
+/* Le conteneur aside ne doit rien clipser horizontalement */
+aside { min-width: 0 !important; }
+
+/* Barre d'onglets compacte, scroll horizontal si ça déborde */
+.tabs{
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  flex-wrap: nowrap !important;        /* reste sur une seule ligne */
+  overflow-x: auto !important;         /* permet de voir le 4e si trop long */
+  overflow-y: hidden !important;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.tabs::-webkit-scrollbar { display: none; } /* masque la barre sur WebKit */
+
+/* Les boutons d’onglets ne s’étirent pas, ne se compressent pas */
+.tabs > button{
+  flex: 0 0 auto !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;      /* pas de retour à la ligne dans le bouton */
+}
+
+/* Si tu gardes "Vérifier les liens" dans la ligne des onglets */
+#btnVerifyLinks{
+  margin-left: auto !important;
+  flex: 0 0 auto !important;
+  height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  border-radius: 999px !important;
+}
+/* Onglets: 4 cases fixes en grille (pas de bouton coupé) */
+.tabs{
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important; /* 4 colonnes égales */
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important; /* ne pas clipser */
+}
+.tabs > button{
+  min-width: 0 !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important; /* coupe proprement les libellés longs */
+}
+
+/* Responsive: sur petit écran, 2 x 2 */
+@media (max-width: 480px){
+  .tabs{ grid-template-columns: repeat(2, 1fr) !important; }
+}
+aside{ min-width: 0 !important; overflow: visible !important; }
+/* Aside = colonne propre, rien ne clipse */
+aside {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+}
+
+/* Onglets : une seule ligne, plus compacts */
+.tabs{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; /* répartit sur toute la ligne */
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+.tabs > button{
+  flex: 1 1 0 !important;    /* 4 largeurs égales qui se tassent si besoin */
+  min-width: 0 !important;   /* autorise la compression */
+  height: 30px !important;
+  padding: 0 8px !important; /* plus étroit */
+  font-size: 12px !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important; /* coupe proprement si très long */
+}
+
+/* Bouton "Vérifier les liens" centré sous les onglets */
+#btnVerifyLinks{
+  display: block !important;
+  margin: 8px auto 6px !important;  /* centre horizontalement */
+  height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  border-radius: 999px !important;
+  max-width: 220px !important;      /* évite qu’il soit trop large */
+  width: auto !important;
+}
+/* Onglets: largeur FIXE par bouton (sauf #btnVerifyLinks), responsive */
+aside .tabs{
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  flex-wrap: nowrap !important;           /* 1 seule ligne */
+  overflow-x: auto !important;            /* défilement si trop étroit */
+  overflow-y: hidden !important;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+aside .tabs::-webkit-scrollbar{ display:none; }
+
+aside .tabs > button:not(#btnVerifyLinks){
+  flex: 0 0 81px !important;
+  width: 81px !important;
+  min-width: 81px !important;
+  max-width: 81px !important;
+  height: 30px !important;
+  padding: 0 6px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Style actif (optionnel) */
+aside .tabs > button.active{
+  border-bottom: 2px solid var(--accent) !important;
+  font-weight: 700 !important;
+}
+
+/* "Vérifier les liens" centré sous la barre (pas dans .tabs) */
+#btnVerifyLinks{
+  display: block !important;
+  margin: 8px auto 6px !important;
+  height: 28px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  border-radius: 999px !important;
+  width: auto !important;
+  max-width: 220px !important;
+}
+
+/* ======= Breakpoints ======= */
+/* Écrans <= 900px : un peu plus compacts */
+@media (max-width: 900px){
+  aside .tabs > button:not(#btnVerifyLinks){
+    flex-basis: 74px !important;
+    width: 74px !important; min-width: 74px !important; max-width: 74px !important;
+  }
+}
+
+/* Écrans <= 600px : encore plus compacts */
+@media (max-width: 600px){
+  aside .tabs > button:not(#btnVerifyLinks){
+    flex-basis: 68px !important;
+    width: 68px !important; min-width: 68px !important; max-width: 68px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* Écrans très étroits <= 420px : ultra-compact */
+@media (max-width: 420px){
+  aside .tabs > button:not(#btnVerifyLinks){
+    flex-basis: 64px !important;
+    width: 64px !important; min-width: 64px !important; max-width: 64px !important;
+    font-size: 10.5px !important;
+    padding: 0 5px !important;
+  }
+}
+
+// === Tabs width fixer (force-inline + responsive) =========================
+(function fixTabsWidth(){
+  function applyWidths() {
+    var tabs = document.querySelector('.tabs');
+    if (!tabs) return;
+
+    // 1) sortir le bouton "Vérifier les liens" de .tabs s'il s'y trouve
+    var verify = document.getElementById('btnVerifyLinks');
+    if (verify && verify.parentElement === tabs) {
+      tabs.insertAdjacentElement('afterend', verify);
+      verify.style.display = 'block';
+      verify.style.margin = '8px auto 6px';
+    }
+
+    // 2) normaliser le conteneur .tabs (inline styles > CSS externes)
+    tabs.style.display = 'flex';
+    tabs.style.flexWrap = 'nowrap';
+    tabs.style.alignItems = 'center';
+    tabs.style.gap = '6px';
+    tabs.style.padding = '6px 8px';
+    tabs.style.overflowX = 'auto';
+    tabs.style.overflowY = 'hidden';
+
+    // 3) calcule la largeur selon le viewport
+    var w = 81;
+    var vw = (window.innerWidth || document.documentElement.clientWidth || 1024);
+    if (vw <= 900) w = 74;
+    if (vw <= 600) w = 68;
+    if (vw <= 420) w = 64;
+
+    // 4) applique aux 4 onglets (tous les buttons dans .tabs)
+    var btns = Array.prototype.slice.call(tabs.querySelectorAll('button'));
+    btns.forEach(function(b){
+      // ignorer un éventuel bouton parasite qui n’est pas un onglet
+      if (b.id === 'btnVerifyLinks') return;
+      b.style.flex = '0 0 ' + w + 'px';
+      b.style.width = w + 'px';
+      b.style.minWidth = w + 'px';
+      b.style.maxWidth = w + 'px';
+      b.style.height = '30px';
+      b.style.padding = '0 6px';
+      b.style.fontSize = (w <= 64 ? '10.5px' : (w <= 68 ? '11px' : '12px'));
+      b.style.lineHeight = '1';
+      b.style.borderRadius = '8px';
+      b.style.whiteSpace = 'nowrap';
+      b.style.overflow = 'hidden';
+      b.style.textOverflow = 'ellipsis';
+      b.style.boxSizing = 'border-box';
+    });
+  }
+
+  // 1ère application
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyWidths);
+  } else {
+    applyWidths();
+  }
+
+  // réapplique quand on redimensionne
+  window.addEventListener('resize', function(){ applyWidths(); });
+
+  // utilitaire global si tu veux relancer après un rerender
+  window.fixTabsWidth = applyWidths;
+
+  // molette → scroll horizontal
+  var tabs = document.querySelector('.tabs');
+  if (tabs && !tabs.__wheelBound) {
+    tabs.__wheelBound = true;
+    tabs.addEventListener('wheel', function(e){
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        tabs.scrollLeft += e.deltaY;
+        e.preventDefault();
+      }
+    }, { passive:false });
+  }
+})();
+/* Vérifier les liens — style Crystal (même look que les chips catégories) */
+#btnVerifyLinks{
+  display: block !important;
+  margin: 8px auto 6px !important;     /* centré sous les onglets */
+  height: 28px !important;
+  padding: 0 12px !important;
+  font-size: 12px !important;
+  border-radius: 999px !important;
+
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  transition: background .15s ease, color .15s ease, border-color .15s ease !important;
+}
+#btnVerifyLinks:hover{
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+#btnVerifyLinks:active{
+  transform: translateY(0) !important;
+  box-shadow: none !important;
+}
+/* === Fond dégradé animé (Crystal) === */
+:root{
+  /* couleur du texte claire utilisée sur fond sombre */
+  --text-light: #f2f5fa;
+}
+
+/* Body: fond animé + couleur de texte */
+body{
+  color: var(--text-light) !important;
+  background: linear-gradient(135deg, #0b0f1a, #111827, #1e293b) fixed !important;
+  background-size: 400% 400% !important;
+  animation: gradientFlow 30s ease infinite !important;
+}
+
+/* Assure aussi le fond sur les zones principales */
+html, body{
+  min-height: 100%;
+  background-attachment: fixed;
+}
+
+/* L’overlay éventuel ne doit pas masquer le gradient */
+main, header, footer, aside{
+  background-color: transparent !important;
+}
+
+/* Animation du gradient */
+@keyframes gradientFlow{
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* (Optionnel) Mode clair : fond plus doux */
+body.light{
+  color: #0b0f1a !important; /* texte foncé */
+  background: linear-gradient(135deg, #eef2ff, #e2e8f0, #f8fafc) fixed !important;
+  background-size: 400% 400% !important;
+  animation: gradientFlow 30s ease infinite !important;
+}
+/* Empêche le débordement dans la liste */
+.item .left{ 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  min-width: 0;                /* essentiel en flex */
+}
+.item .meta{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;                /* autorise le shrink du texte */
+}
+.item .name{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;         /* ellipse sur une seule ligne */
+}
+
+/* (facultatif) ellipse sur 2 lignes */
+.item .name.wrap2{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;       /* nb de lignes */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
