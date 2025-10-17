@@ -1799,3 +1799,37 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
     }
   });
 })();
+// Rafraîchir la page + placement entre "Importer fichier" et "Changer de thème"
+(function setupRefreshBtn(){
+  const btn = document.getElementById('btnRefresh');
+  if (!btn || btn.__wired) return;
+  btn.__wired = true;
+
+  // Action: rechargement "dur" (bypass cache) si possible
+  btn.addEventListener('click', () => {
+    // hard reload : true -> bypass cache sur la plupart des navigateurs
+    location.reload(true);
+  });
+
+  // Placement: entre Import Fichier et Changer de thème
+  // Essaie de détecter les éléments de référence
+  const controls = document.querySelector('.controls') || btn.parentElement;
+  const importLabel = controls?.querySelector('.fileLabel, label[for="fileInput"], input[type="file"]');
+  const themeBtn = controls?.querySelector('#btnTheme, #btnToggleTheme, [data-action="toggle-theme"]');
+
+  if (controls && importLabel && themeBtn) {
+    // Insère juste avant le bouton thème
+    controls.insertBefore(btn, themeBtn);
+  } else if (controls && importLabel) {
+    // À défaut, juste après l'import fichier
+    importLabel.insertAdjacentElement('afterend', btn);
+  } // sinon on laisse le bouton où tu l'as mis en HTML
+
+  // (Optionnel) Raccourci clavier: Alt+R
+  document.addEventListener('keydown', (e)=>{
+    if ((e.altKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+      e.preventDefault();
+      btn.click();
+    }
+  }, { passive: false });
+})();
