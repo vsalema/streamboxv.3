@@ -1735,4 +1735,19 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
   var n = document.getElementById('nextBtn');
   if (n) { if (!n.classList.contains('btn')) n.classList.add('btn'); if (!n.classList.contains('navBtn')) n.classList.add('navBtn'); }
 })();
-
+// === Patch helper: réserve dynamiquement l'espace pour la nowBar ===
+(function reserveForNowBar(){
+  const nb = document.getElementById('nowBar');
+  const main = document.querySelector('main');
+  if (!nb || !main) return;
+  function apply() {
+    try{
+      const h = nb.getBoundingClientRect().height || 64;
+      main.style.paddingBottom = (h + 24) + 'px';
+    }catch(_){}
+  }
+  apply();
+  document.addEventListener('nowbar:updated', apply);
+  window.addEventListener('resize', apply);
+  setTimeout(apply, 300);
+})();
