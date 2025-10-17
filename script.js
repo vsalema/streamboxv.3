@@ -1751,3 +1751,205 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
   window.addEventListener('resize', apply);
   setTimeout(apply, 300);
 })();
+// === StreamBoost Perf Patch (append at END of script.js) ===
+(function(){
+  const SB = (window.StreamBoost = window.StreamBoost || {});
+  const $ = s => document.querySelector(s);
+  function toastSafe(m){ try{ if(typeof toast==='function') toast(m);}catch(_){} }
+  function safeUpdateNow(title, url){
+    try{
+      if (typeof updateNowBar==='function') updateNowBar(title, url);
+      else {
+        const bar = $('#nowBar'); if (!bar) return;
+        let t = $('#nowTitle') || Object.assign(document.createElement('span'), { id:'nowTitle' });
+        if (!t.parentElement) bar.insertBefore(t, bar.querySelector('.nowbar-actions'));
+        t.textContent = title || (url || '—');
+        document.dispatchEvent(new CustomEvent('nowbar:updated', { detail:{ title, url } }));
+      }
+    }catch(_){}
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+
+  SB.loadM3UStreaming = async function(url, onChunk, opts={}){
+    const chunkSize = opts.chunkSize || 300;
+    let count = 0;
+    safeUpdateNow('Import en cours…', url);
+    try{
+      const res = await fetch(url);
+      if (!res.ok || !res.body) throw new Error('Fetch/stream failed');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '', items = [], current = null;
+
+      const push = () => {
+        if (items.length){
+          onChunk(items);
+          items = [];
+          document.dispatchEvent(new Event('list:rendered'));
+        }
+      };
+
+      while(true){
+        const { value, done } = await reader.read();
+        buf += decoder.decode(value || new Uint8Array(), { stream: !done });
+        let lines = buf.split(/\r?\n/);
+        buf = lines.pop() || '';
+        for (let line of lines){
+          line = line.trim(); if (!line) continue;
+          if (line.startsWith('#EXTINF')){
+            const name = line.split(',').pop().trim();
+            const logoMatch = /tvg-logo="([^"]+)"/.exec(line);
+            const groupMatch = /group-title="([^"]+)"/.exec(line);
+            current = { name, url:null, group: groupMatch?groupMatch[1]:null, logo: logoMatch?logoMatch[1]:null };
+          } else if (/^https?:\/\//i.test(line)){
+            if (!current) current = { name: line, group:null, logo:null };
+            current.url = line;
+            items.push(current);
+            current = null;
+            count++;
+            if (count % 100 === 0) safeUpdateNow(`Import… ${count.toLocaleString('fr-FR')} ch.`, url);
+          } else if (line.startsWith('#EXTGRP:')){
+            if (current) current.group = line.slice(8).trim();
+          }
+          if (items.length >= chunkSize){
+            push();
+            await new Promise(r => requestAnimationFrame(r));
+          }
+        }
+        if (done) break;
+      }
+      if (buf.trim()) { /* ignore last partial */ }
+      push();
+      safeUpdateNow(`Import terminé — ${count.toLocaleString('fr-FR')} chaînes`, url);
+      toastSafe('Import M3U terminé');
+      return { aborted:false, count };
+    }catch(e){
+      console.error('[StreamBoost]', e);
+      toastSafe('Erreur import M3U');
+      return { aborted:true, error:String(e) };
+    }
+  };
+
+  SB.renderListProgressive = async function(data, batch=400){
+    const list = $('#list'); if (!list) return;
+    list.innerHTML = '';
+    for (let i=0; i<data.length; i+=batch){
+      const frag = document.createDocumentFragment();
+      const slice = data.slice(i, i+batch);
+      for (const item of slice){
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.dataset.url = item.url || '';
+        div.dataset.name = item.name || item.url || '';
+        div.innerHTML = \`
+          <div class="left">
+            <span class="logo-sm">\${item.logo ? \`<img loading="lazy" data-src="\${escapeHtml(item.logo)}" alt="">\` : ''}</span>
+            <div class="meta"><div class="name">\${escapeHtml(item.name || item.url)}</div></div>
+          </div>
+          <span class="star">\${(typeof isFav==='function' && isFav(item.url)) ? '★':'☆'}</span>
+        \`;
+        frag.appendChild(div);
+      }
+      list.appendChild(frag);
+      document.dispatchEvent(new Event('list:rendered'));
+      SB.enableLazyLogos();
+      await new Promise(r => requestAnimationFrame(r));
+    }
+  };
+
+  SB.mountVirtualList = function(container, data, rowH=64, buffer=6){
+    container = container || $('#list'); if (!container) return;
+    container.innerHTML = '';
+    const spacer = document.createElement('div');
+    spacer.style.height = (data.length * rowH) + 'px';
+    spacer.style.position = 'relative';
+    container.appendChild(spacer);
+
+    const pool = [];
+    function renderWindow(){
+      const scrollTop = container.scrollTop;
+      const start = Math.max(0, Math.floor(scrollTop/rowH) - buffer);
+      const end = Math.min(data.length, start + Math.ceil(container.clientHeight/rowH) + 2*buffer);
+      while (pool.length > (end-start)) { spacer.removeChild(pool.pop()); }
+      for (let i=pool.length; i<(end-start); i++){ const el=document.createElement('div'); el.className='item'; pool.push(el); spacer.appendChild(el); }
+      for (let i=start; i<end; i++){
+        const item = data[i], el = pool[i-start];
+        el.style.position='absolute'; el.style.left=0; el.style.right=0; el.style.top=(i*rowH)+'px'; el.style.height=rowH+'px';
+        el.dataset.url=item.url||''; el.dataset.name=item.name||item.url||'';
+        el.innerHTML = \`
+          <div class="left">
+            <span class="logo-sm">\${item.logo ? \`<img loading="lazy" data-src="\${escapeHtml(item.logo)}" alt="">\` : ''}</span>
+            <div class="meta"><div class="name">\${escapeHtml(item.name || item.url)}</div></div>
+          </div>
+          <span class="star">\${(typeof isFav==='function' && isFav(item.url)) ? '★':'☆'}</span>
+        \`;
+      }
+      SB.enableLazyLogos(container);
+    }
+    container.addEventListener('scroll', renderWindow, { passive:true });
+    window.addEventListener('resize', renderWindow);
+    renderWindow();
+  };
+
+  SB.enableLazyLogos = function(root){
+    root = root || document.querySelector('#list');
+    if (!root) return;
+    const imgs = root.querySelectorAll('img[data-src]:not([data-lazy-bound])');
+    if (!imgs.length) return;
+    const io = new IntersectionObserver((entries)=>{
+      for (const e of entries){
+        if (e.isIntersecting){
+          const img = e.target;
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+          io.unobserve(img);
+        }
+      }
+    }, { root, rootMargin: '200px' });
+    imgs.forEach(img => { img.setAttribute('data-lazy-bound',''); io.observe(img); });
+  };
+
+  function attachFastUrlImport(){
+    const btn = document.getElementById('btnImportUrl');
+    const input = document.getElementById('urlInput');
+    if (!btn || !input || btn.__streamBoostHook) return;
+    btn.__streamBoostHook = true;
+    btn.addEventListener('click', async (e)=>{
+      const url = (input.value || '').trim();
+      const looksM3U = /\bm3u8?(\b|$)/i.test(url);
+      if (!looksM3U) return;
+      e.preventDefault(); e.stopPropagation();
+      try{
+        window.channels = window.channels || []; window.channels.length = 0;
+        safeUpdateNow('Import en cours…', url);
+        await SB.loadM3UStreaming(url, (chunk)=>{
+          window.channels.push(...chunk);
+          if (typeof renderList==='function') renderList();
+          else SB.renderListProgressive(window.channels);
+        }, { chunkSize: 300 });
+        if (window.channels.length > 8000){
+          const listEl = document.getElementById('list');
+          if (listEl) SB.mountVirtualList(listEl, window.channels, 64, 8);
+        }
+      }catch(err){
+        console.error('[StreamBoost fast import] ', err);
+        toastSafe('Import rapide impossible');
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachFastUrlImport);
+  else attachFastUrlImport();
+  setTimeout(attachFastUrlImport, 300);
+
+  SB.importM3U = async function(url){
+    window.channels = window.channels || [];
+    window.channels.length = 0;
+    await SB.loadM3UStreaming(url, (chunk)=>{
+      window.channels.push(...chunk);
+      if (typeof renderList==='function') renderList();
+      else SB.renderListProgressive(window.channels);
+    });
+  };
+
+  console.log('[StreamBoost] ready');
+})();
