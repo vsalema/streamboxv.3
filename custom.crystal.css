@@ -1386,3 +1386,6 @@ aside .tabs, #catBar { flex: 0 0 auto; }
   main { padding-bottom: 92px; }
   #nowBar { bottom: max(16px, env(safe-area-inset-bottom)); }
 }
+/* === StreamBoost optional styles === */
+#list .item{ min-height: 64px; }
+.logo-sm img{ display:block; max-width:100%; max-height:100%; object-fit:contain; }
