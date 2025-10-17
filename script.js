@@ -2211,3 +2211,64 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
     }
   }, { passive:false });
 })();
+// === AlphaBar dans la nowBar (avant Prev/Next) =============================
+(function mountAlphaInNowBar(){
+  const ensureBar = () => {
+    let bar = document.getElementById('alphaBar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'alphaBar';
+    }
+    return bar;
+  };
+
+  const now = document.getElementById('nowBar');
+  if (!now) return;
+  const actions = now.querySelector('.nowbar-actions') || now;
+
+  const bar = ensureBar();
+
+  // Insérer juste avant le bouton Prev si présent, sinon au début des actions
+  const prev = document.getElementById('prevBtn');
+  if (prev && prev.parentElement === actions) {
+    actions.insertBefore(bar, prev);
+  } else {
+    actions.insertBefore(bar, actions.firstChild);
+  }
+
+  // Si la barre est vide, la construire
+  if (!bar.childElementCount) {
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(ch => {
+      const b = document.createElement('button');
+      b.className = 'az';
+      b.type = 'button';
+      b.textContent = ch;
+      b.addEventListener('click', () => {
+        const list = document.getElementById('list');
+        if (!list) return;
+        const items = list.querySelectorAll('.item .name');
+        let target = null;
+        for (const el of items) {
+          const t = (el.textContent || '').trim().toUpperCase();
+          const isDigit = /^[0-9]/.test(t);
+          if (ch === '#') {
+            if (isDigit) { target = el.closest('.item'); break; }
+          } else if (t.startsWith(ch)) { target = el.closest('.item'); break; }
+        }
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      bar.appendChild(b);
+    });
+  }
+
+  // Molette verticale => scroll horizontal dans la barre
+  if (!bar.__wheelBound) {
+    bar.__wheelBound = true;
+    bar.addEventListener('wheel', (e) => {
+      if (bar.scrollWidth > bar.clientWidth && Math.abs(e.deltaY) > 0) {
+        bar.scrollLeft += e.deltaY;
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
+})();
