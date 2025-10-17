@@ -1553,3 +1553,54 @@ aside .tabs, #catBar { flex: 0 0 auto; }
 /* Sidebar: assure la visibilité de la liste */
 aside{ display:flex; flex-direction:column; }
 #list{ flex: 1 1 auto; min-height: 0; }  /* évite que la barre pousse la liste */
+/* === AlphaBar flottante (toujours visible, n’affecte pas le layout) === */
+aside { position: relative; }
+
+/* Barre compacte, superposée en haut de l’aside */
+#alphaBar{
+  position: absolute !important;
+  top: 0; left: 0; right: 0;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 2px 6px !important;
+  margin: 0 !important;
+  border-radius: 0 0 8px 8px !important;
+
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,.08)), rgba(255,255,255,.03)) !important;
+  border-bottom: var(--stroke, 1px solid rgba(255,255,255,.18)) !important;
+  border-left: none !important; border-right: none !important; border-top: none !important;
+
+  z-index: 3;
+  overflow: hidden !important;  /* pas de saut de ligne */
+  white-space: nowrap !important;
+}
+
+/* Boutons mini */
+#alphaBar .az{
+  font-size: 11px !important;
+  padding: 1px 6px !important;
+  line-height: 1 !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  cursor: pointer !important;
+  flex: 0 0 auto !important;
+}
+#alphaBar .az:hover{
+  background: color-mix(in srgb, var(--accent, #3b82f6) 22%, rgba(255,255,255,.06)) !important;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent) !important;
+}
+
+/* La liste ne change pas de hauteur globale : juste un padding interne
+   pour laisser passer la barre flottante sans recouvrir la 1ère ligne */
+#list{
+  padding-top: 32px !important;  /* ~ hauteur alphaBar */
+  flex: 1 1 auto; min-height: 0; /* garde l’aside stable */
+}
+
+/* Défilement horizontal à la molette si besoin (barre fine) */
+#alphaBar { scrollbar-width: thin; }
+#alphaBar::-webkit-scrollbar { height: 6px; }
+#alphaBar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 999px; }
