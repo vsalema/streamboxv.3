@@ -1604,3 +1604,47 @@ aside { position: relative; }
 #alphaBar { scrollbar-width: thin; }
 #alphaBar::-webkit-scrollbar { height: 6px; }
 #alphaBar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 999px; }
+/* === AlphaBar intégrée à la nowBar (compacte, scrollable, ne pousse rien) */
+#nowBar #alphaBar{
+  pointer-events: auto !important;          /* clics actifs (nowBar a pointer-events:none) */
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 26px !important;
+  padding: 2px 6px !important;
+  margin-right: 8px !important;
+
+  /* Limite la largeur pour ne pas “manger” les autres boutons */
+  max-width: 40vw !important;               /* ajuste si tu veux plus/moins long */
+  flex: 0 1 auto !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+
+  background: rgba(255,255,255,.06);        /* léger fond (verre) */
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 8px;
+}
+
+#nowBar #alphaBar .az{
+  font-size: 12px !important;
+  padding: 2px 6px !important;
+  line-height: 1 !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  color: var(--text-strong, #fff) !important;
+  flex: 0 0 auto !important;
+  cursor: pointer !important;
+  transition: background .2s ease, border-color .2s ease;
+}
+#nowBar #alphaBar .az:hover{
+  background: color-mix(in srgb, var(--accent, #3b82f6) 22%, rgba(255,255,255,.08)) !important;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent) !important;
+}
+
+/* Responsive: rétrécit la largeur max de l'AlphaBar sur petits écrans */
+@media (max-width: 900px){
+  #nowBar #alphaBar{ max-width: 56vw !important; height: 24px !important; }
+  #nowBar #alphaBar .az{ font-size: 11px !important; padding: 2px 5px !important; }
+}
