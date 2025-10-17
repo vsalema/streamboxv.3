@@ -1833,3 +1833,139 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
     }
   }, { passive: false });
 })();
+
+// === YouTube Autoplay + Unmute Patch (drop-in, no conflict) ===============
+;(() => {
+  if (window.__YT_AUTOPLAY_PATCH__) return;
+  window.__YT_AUTOPLAY_PATCH__ = true;
+
+  function extractYouTubeId(u){
+    try{
+      const url = new URL(u);
+      if (url.hostname.includes('youtu.be')) return url.pathname.slice(1);
+      if (url.searchParams.get('v')) return url.searchParams.get('v');
+      const m = url.pathname.match(/\/(embed|shorts)\/([^\/?#&]+)/);
+      if (m) return m[2];
+    }catch{}
+    const r = /(?:v=|\/embed\/|\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{6,})/;
+    const m = String(u).match(r);
+    return m ? m[1] : null;
+  }
+  window.extractYouTubeId = window.extractYouTubeId || extractYouTubeId;
+
+  if (!window.__hadUserGesture){
+    const mark = () => { window.__hadUserGesture = true; 
+      window.removeEventListener('click', mark, true);
+      window.removeEventListener('keydown', mark, true);
+      window.removeEventListener('pointerdown', mark, true);
+      window.removeEventListener('touchstart', mark, true);
+    };
+    window.addEventListener('click', mark, true);
+    window.addEventListener('keydown', mark, true);
+    window.addEventListener('pointerdown', mark, true);
+    window.addEventListener('touchstart', mark, true);
+  }
+
+  function showYtUnmuteHint(){
+    let b = document.getElementById('ytUnmute');
+    if (!b) {
+      b = document.createElement('button');
+      b.id = 'ytUnmute';
+      b.textContent = '🔊 Activer le son';
+      b.style.cssText = 'position:absolute;right:12px;bottom:12px;z-index:1002;padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer;background:rgba(0,0,0,.55);color:#fff;border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px)';
+      const ps = document.getElementById('playerSection');
+      ps && ps.appendChild(b);
+    }
+    b.style.display = 'inline-flex';
+    b.onclick = (e)=>{
+      e.stopPropagation();
+      try{
+        const yt = document.getElementById('ytPlayer');
+        yt?.contentWindow?.postMessage(JSON.stringify({event:'command', func:'unMute', args:[]}), '*');
+        yt?.contentWindow?.postMessage(JSON.stringify({event:'command', func:'setVolume', args:[100]}), '*');
+        yt?.contentWindow?.postMessage(JSON.stringify({event:'command', func:'playVideo', args:[]}), '*');
+      }catch{}
+      hideYtUnmuteHint();
+      window.__hadUserGesture = true;
+    };
+  }
+  function hideYtUnmuteHint(){
+    const b = document.getElementById('ytUnmute');
+    if (b) b.style.display = 'none';
+  }
+
+  function playYouTube(u){
+    const id = extractYouTubeId(u);
+    if (!id){ console.warn('[YT] ID introuvable', u); return; }
+
+    const ps = document.getElementById('playerSection');
+    const yt = document.getElementById('ytPlayer');
+    const noSource = document.getElementById('noSource');
+
+    try { window.resetPlayers && window.resetPlayers(); } catch {}
+    if (noSource) noSource.style.display = 'none';
+    ps && ps.classList.add('playing');
+
+    const base = `https://www.youtube.com/embed/${id}`;
+    const params = new URLSearchParams({
+      autoplay: '1',
+      mute: '1',
+      playsinline: '1',
+      enablejsapi: '1',
+      rel: '0',
+      modestbranding: '1',
+      origin: location.origin
+    });
+
+    try {
+      const srcUrl = new URL(u);
+      const list = srcUrl.searchParams.get('list');
+      if (list) params.set('list', list);
+    } catch {}
+
+    yt.style.display = 'block';
+    yt.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    yt.src = `${base}?${params.toString()}`;
+
+    const send = (cmd, args=[]) => {
+      try { yt.contentWindow.postMessage(JSON.stringify({ event:'command', func:cmd, args }), '*'); } catch {}
+    };
+
+    const onLoad = () => {
+      send('playVideo');
+      if (window.__hadUserGesture) {
+        send('unMute'); send('setVolume',[100]); send('playVideo');
+        hideYtUnmuteHint();
+      } else {
+        showYtUnmuteHint();
+      }
+    };
+    yt.addEventListener('load', onLoad, { once:true });
+
+    const unmuteOnce = () => {
+      send('unMute'); send('setVolume',[100]); send('playVideo');
+      hideYtUnmuteHint();
+      window.removeEventListener('click', unmuteOnce, true);
+      window.removeEventListener('keydown', unmuteOnce, true);
+      window.removeEventListener('pointerdown', unmuteOnce, true);
+      window.removeEventListener('touchstart', unmuteOnce, true);
+    };
+    window.addEventListener('click', unmuteOnce, true);
+    window.addEventListener('keydown', unmuteOnce, true);
+    window.addEventListener('pointerdown', unmuteOnce, true);
+    window.addEventListener('touchstart', unmuteOnce, true);
+
+    try { window.updateNowBar && window.updateNowBar(undefined, u); } catch {}
+  }
+  window.playYouTube = playYouTube;
+
+  const _pbt = window.playByType;
+  window.playByType = function(url){
+    if (/(?:youtube\.com|youtu\.be)\//i.test(url||'')) {
+      return playYouTube(url);
+    }
+    return _pbt ? _pbt(url) : null;
+  };
+
+  console.log('[YT Patch] Autoplay+Unmute prêt');
+})();
