@@ -1673,7 +1673,7 @@ const Zapper = (() => {
     try {
       const v = document.getElementById('videoPlayer');
       if (v && v.style.display === 'block') {
-        v.muted = true;
+        v.muted = false;
         const p = v.play();
         if (p && p.catch) p.catch(()=>{});
       }
@@ -2167,7 +2167,7 @@ next.className = 'navBtn btn'; next.className='navBtn'; next.title='Chaîne suiv
       // Nudge autoplay pour <video>
       const v = $('#videoPlayer');
       if (v && v.style.display === 'block') {
-        v.muted = true;
+        v.muted = false;
         const p = v.play(); if (p && p.catch) p.catch(()=>{});
       }
     } catch (err){
