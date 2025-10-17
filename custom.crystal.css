@@ -1520,3 +1520,36 @@ aside .tabs, #catBar { flex: 0 0 auto; }
   background: color-mix(in srgb, var(--accent, #3b82f6) 20%, rgba(255,255,255,.06));
   border-color: color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent);
 }
+/* === AlphaBar ultra-compacte (1 ligne, scroll horizontal) ================ */
+#alphaBar{
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 6px !important;
+  margin: 6px 8px !important;
+  height: 30px !important;              /* ↓ faible hauteur */
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, var(--glass-strong, rgba(255,255,255,.08)), rgba(255,255,255,.03)) !important;
+  border: var(--stroke, 1px solid rgba(255,255,255,.18)) !important;
+  scrollbar-width: thin;
+}
+#alphaBar .az{
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  line-height: 1 !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  cursor: pointer !important;
+}
+#alphaBar .az:hover{
+  background: color-mix(in srgb, var(--accent, #3b82f6) 22%, rgba(255,255,255,.06)) !important;
+  border-color: color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent) !important;
+}
+
+/* Sidebar: assure la visibilité de la liste */
+aside{ display:flex; flex-direction:column; }
+#list{ flex: 1 1 auto; min-height: 0; }  /* évite que la barre pousse la liste */
