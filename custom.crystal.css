@@ -1118,6 +1118,49 @@ main, header, footer, aside{ background-color:transparent !important; }
   #nowBar{ column-gap:6px !important; }
   #nowBar .nowbar-actions .navBtn{ min-width:26px !important; height:26px !important; padding:0 6px !important; }
 }
+/* === Harmonise Prev/Next avec les autres boutons de la nowBar === */
+#nowBar .nowbar-actions .navBtn{
+  /* mêmes dimensions & typographie */
+  height: 32px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+
+  /* mêmes couleurs que les autres actions Crystal */
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+
+  /* confort */
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* animation comme les autres */
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+#nowBar .nowbar-actions .navBtn:hover{
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* option : compacter un peu en mobile */
+@media (max-width: 900px){
+  #nowBar .nowbar-actions .navBtn{
+    height: 28px;
+    padding: 4px 8px;
+    border-radius: 7px;
+    font-size: 13px;
+  }
+}
+
+     
 /* === FORCE le look des boutons Prev/Next comme les autres === */
 #nowBar .nowbar-actions .navBtn,
 #nowBar .nowbar-actions #prevBtn,
