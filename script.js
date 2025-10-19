@@ -123,17 +123,22 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
-  video.style.display = 'block';
-  setPlaying(true);
-  const DASH = window.dashjs?.MediaPlayer;
-  if (DASH && typeof DASH.create === 'function') {
-    const p = DASH.create();
-    p.initialize(video, url, true);
+  var v = document.getElementById('videoPlayer');
+  if (!v) return;
+  v.style.display = 'block';
+  try { setPlaying(true); } catch(_){}
+  var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
+  if (MP && typeof MP.create === 'function') {
+    try {
+      var p = MP.create();
+      window.currentDash = p;
+      p.initialize(v, url, true);
+    } catch(e){ console.error('[DASH:init]', e); }
   } else {
-    video.src = url; // fallback
+    console.error('[DASH] dash.js indisponible');
+    return;
   }
-  updateNowBar(undefined, url);
+  try { updateNowBar(undefined, url); } catch(_){}
 }
 function playVideo(url){
   try{ window.suspendPings && window.suspendPings(); }catch(_){}
