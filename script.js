@@ -101,7 +101,6 @@ function updateNowBar(nameOrUrl, url){
 
 // --- Players ---
 function playHls(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   video.style.display = 'block';
   setPlaying(true);
   try {
@@ -123,15 +122,15 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
+  console.log('[playDash] init', url);
   var v = document.getElementById('videoPlayer');
-  if (!v) return;
+  if (!v) { console.error('[playDash] video element missing'); return; }
   try { v.style.display = 'block'; } catch(_){}
   try { setPlaying && setPlaying(true); } catch(_){}
   var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
   if (!(MP && typeof MP.create === 'function')) {
-    try { showToast && showToast('dash.js indisponible'); } catch(_){}
-    return; // NE PAS faire v.src=url pour MPD
+    console.error('[playDash] dash.js not available');
+    return;
   }
   try {
     if (window.currentDash && window.currentDash.reset) { try{ window.currentDash.reset(); }catch(_){ } }
@@ -140,23 +139,21 @@ function playDash(url){
     p.initialize(v, url, true);
     try {
       var ev = window.dashjs.MediaPlayer.events;
-      p.on && p.on(ev.ERROR, function(e){ try{ console.error('[dash.js ERROR]', e); showToast && showToast('dash.js error'); }catch(_){} });
+      if (p.on && ev) {
+        p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED || ev.CAN_PLAY, function(){ 
+          console.log('[playDash] ready, requesting play()');
+          try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+        });
+        p.on(ev.ERROR, function(e){ console.error('[dash.js ERROR]', e); });
+      }
     } catch(_){ }
-    try {
-      var ev = window.dashjs.MediaPlayer.events;
-      p.on && p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED, function(){
-        try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
-      });
-    } catch(_){}
   } catch(e) {
-    try { console.error('[playDash:init]', e); } catch(_){}
-    // NE PAS faire v.src=url
+    console.error('[playDash:init]', e);
     return;
   }
   try { updateNowBar && updateNowBar(undefined, url); } catch(_){}
 }
 function playVideo(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   video.style.display = 'block';
   setPlaying(true);
   video.src = url;
@@ -175,7 +172,6 @@ function playYouTube(url){
   updateNowBar(undefined, url);
 }
 function playByType(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   const v  = document.getElementById('videoPlayer');
   const yt = document.getElementById('ytPlayer');
   const au = document.getElementById('audioPlayer');
@@ -217,85 +213,41 @@ function playByType(url){
   // HLS (m3u8)
   if (isHLS && v){
     v.style.display = 'block';
-    if (window.Hls && window.Hls.isSupported()) {
+    if (window.Hls && window.Hls.isSupported()){
       try {
         const hls = new Hls({ enableWorker: true });
         window.currentHls = hls;
         hls.attachMedia(v);
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(u));
-        hls.on(Hls.Events.MANIFEST_PARSED, () => { try { v.muted = false; v.play().catch(()=>{}); } catch(_){} });
       } catch(_){}
     } else {
       v.src = u; // Safari natif
-      v.addEventListener('loadedmetadata', function once(){ v.removeEventListener('loadedmetadata', once); try { v.play().catch(()=>{}); } catch(_){} });
     }
+    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
     showPlaying(); return;
   }
 
   // DASH (mpd)
-  if (isDASH){
-    try { playDash(u); } catch(_) {}
+  if (isDASH && v && window.dashjs){
+    v.style.display = 'block';
+    try {
+      const p = dashjs.MediaPlayer().create();
+      window.currentDash = p;
+      p.initialize(v, u, true);
+    } catch(_){}
     showPlaying(); return;
   }
 
-// fallback → détection automatique HLS/DASH
-  try { smartPlay(u); } catch(e) { try{ showToast('Erreur lecture'); }catch(_){ } }
+  // fallback → tente dans la <video>
+  if (v){
+    v.src = u;
+    v.style.display = 'block';
+    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+    showPlaying();
+  }
 }
 
 
-
-
-// === Ping management helpers ===
-window._pingEnabled = true;
-window._pingControllers = [];
-window.suspendPings = function(){
-  try {
-    window._pingEnabled = false;
-    var arr = window._pingControllers || [];
-    for (var i=0;i<arr.length;i++){ try{ arr[i].abort && arr[i].abort(); }catch(e){} }
-    window._pingControllers = [];
-  } catch(e){}
-};
-window.resumePings = function(){ window._pingEnabled = true; };
-
-// --- Smart fallback when type unknown ---
-function smartPlay(u){
-  try{ resetPlayers && resetPlayers(); }catch(_){}
-  var v = document.getElementById('videoPlayer');
-  var ps = document.getElementById('playerSection');
-  if (!v) return;
-  v.style.display = 'block';
-  try{ setPlaying && setPlaying(true); }catch(_){}
-  function tryNative(){
-    try{ v.removeAttribute('src'); v.load(); }catch(_){}
-    try{ showToast && showToast('Flux non reconnu'); }catch(_){}
-    try{ setPlaying && setPlaying(false); }catch(_){}
-  }
-  function tryDash(){
-    if (!(window.dashjs && window.dashjs.MediaPlayer)) return tryNative();
-    try{
-      if (window.currentDash){ try{ window.currentDash.reset(); }catch(_){ } window.currentDash = null; }
-      var p = window.dashjs.MediaPlayer().create();
-      window.currentDash = p;
-      p.initialize(v, u, true);
-      // on error fallback to native
-      try{ p.on && p.on(window.dashjs.MediaPlayer.events.ERROR, function(){ try{ p.reset(); }catch(_){ } tryNative(); }); }catch(_){}
-    }catch(e){ tryNative(); }
-  }
-  function tryHls(){
-    if (!(window.Hls && window.Hls.isSupported())) return tryDash();
-    try{
-      if (window.currentHls){ try{ window.currentHls.destroy(); }catch(_){ } window.currentHls = null; }
-      var hls = new Hls({ enableWorker: true });
-      window.currentHls = hls;
-      hls.attachMedia(v);
-      hls.on(Hls.Events.MEDIA_ATTACHED, function(){ try{ hls.loadSource(u); }catch(_){ tryDash(); } });
-      hls.on(Hls.Events.ERROR, function(evt, data){ if (data && data.fatal){ try{ hls.destroy(); }catch(_){ } tryDash(); } });
-    }catch(e){ tryDash(); }
-  }
-  tryHls();
-  try{ if (ps) ps.classList.add('playing'); }catch(_){}
-}
 // --- M3U ---
 function parseM3U(text){
   text = String(text||'').replace(/^\uFEFF/, '');
@@ -514,8 +466,13 @@ function renderList(){
   });
 
   // Ping des liens visibles (optionnel)
-  // Ping auto désactivé
-if (!data.length) {
+  try {
+    if (typeof pingVisibleList === 'function' && (mode === 'channels' || mode === 'history')) {
+      pingVisibleList(6);
+    }
+  } catch(_){}
+
+  if (!data.length) {
     listDiv.innerHTML += '<p style="opacity:.6;padding:10px;">Aucune donnée.</p>';
   }
 }
@@ -603,46 +560,6 @@ function updatePlayerLayout() {
 // Appels initiaux + écoute redimensionnement/orientation
 window.addEventListener('resize', updatePlayerLayout);
 window.addEventListener('orientationchange', updatePlayerLayout);
-
-// --- Video error diagnostics ---
-(function videoPlayerErrorHook(){
-  try{
-    var v = document.getElementById('videoPlayer');
-    if (!v || v.__errHook) return;
-    v.__errHook = true;
-    v.addEventListener('error', function(){
-      var e = v.error || {};
-      var map = { 1:'ABORTED', 2:'NETWORK', 3:'DECODE', 4:'SRC_NOT_SUPPORTED' };
-      var t = '[VIDEO ERROR] code=' + (e.code||0) + ' (' + (map[e.code]||'') + ')';
-      try { console.error(t, e); } catch(_){}
-      try { showToast && showToast('Erreur vidéo: ' + (map[e.code]||e.code)); } catch(_){}
-    });
-  }catch(_){}
-})();
-// --- Guard: empêcher l'affectation native de MPD à <video>.src ---
-(function guardNativeMPD(){
-  try{
-    var v = document.getElementById('videoPlayer');
-    if (!v || v.__mpdGuard) return; v.__mpdGuard = true;
-    try { v.crossOrigin = 'anonymous'; } catch(_){}
-    var desc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'src');
-    if (desc && desc.set) {
-      var origSet = desc.set.bind(v);
-      Object.defineProperty(v, 'src', {
-        configurable: true,
-        enumerable: false,
-        set: function(val){
-          if (typeof val === 'string' && /\.mpd(\?|$)/i.test(val)){
-            console.warn('[Guard] bloc MPD en natif:', val);
-            try { showToast && showToast('MPD pris en charge via dash.js'); } catch(_){}
-            return; // ne pas assigner
-          }
-          return origSet(val);
-        }
-      });
-    }
-  }catch(e){ try{ console.error('[Guard error]', e);}catch(_){ } }
-})();
 document.addEventListener('DOMContentLoaded', updatePlayerLayout);
 // petit tick pour after-paint (polices chargées etc.)
 setTimeout(updatePlayerLayout, 50);
@@ -781,7 +698,6 @@ if (typeof window.__orig_resetPlayers__ === 'undefined' && typeof resetPlayers =
 
 /* 1) Repatch playHls / playDash (robustes, sans syntaxe “moderne”) */
 function playHls(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   try { video.style.display = 'block'; } catch(e){}
   try { if (typeof setPlaying === 'function') setPlaying(true); } catch(e){}
 
@@ -818,15 +734,15 @@ function playHls(url){
 }
 
 function playDash(url){
-  try{ window.suspendPings && window.suspendPings(); }catch(_){}
+  console.log('[playDash] init', url);
   var v = document.getElementById('videoPlayer');
-  if (!v) return;
+  if (!v) { console.error('[playDash] video element missing'); return; }
   try { v.style.display = 'block'; } catch(_){}
   try { setPlaying && setPlaying(true); } catch(_){}
   var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
   if (!(MP && typeof MP.create === 'function')) {
-    try { showToast && showToast('dash.js indisponible'); } catch(_){}
-    return; // NE PAS faire v.src=url pour MPD
+    console.error('[playDash] dash.js not available');
+    return;
   }
   try {
     if (window.currentDash && window.currentDash.reset) { try{ window.currentDash.reset(); }catch(_){ } }
@@ -835,17 +751,16 @@ function playDash(url){
     p.initialize(v, url, true);
     try {
       var ev = window.dashjs.MediaPlayer.events;
-      p.on && p.on(ev.ERROR, function(e){ try{ console.error('[dash.js ERROR]', e); showToast && showToast('dash.js error'); }catch(_){} });
+      if (p.on && ev) {
+        p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED || ev.CAN_PLAY, function(){ 
+          console.log('[playDash] ready, requesting play()');
+          try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+        });
+        p.on(ev.ERROR, function(e){ console.error('[dash.js ERROR]', e); });
+      }
     } catch(_){ }
-    try {
-      var ev = window.dashjs.MediaPlayer.events;
-      p.on && p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED, function(){
-        try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
-      });
-    } catch(_){}
   } catch(e) {
-    try { console.error('[playDash:init]', e); } catch(_){}
-    // NE PAS faire v.src=url
+    console.error('[playDash:init]', e);
     return;
   }
   try { updateNowBar && updateNowBar(undefined, url); } catch(_){}
@@ -1497,10 +1412,8 @@ function highlightCurrentSubs(){
 function pingUrl(url, timeoutMs){
   return new Promise(function(resolve){
     var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    try{ if (ctrl) (window._pingControllers = window._pingControllers||[]).push(ctrl); }catch(_){}
     var t = setTimeout(function(){ try{ ctrl && ctrl.abort(); }catch(_){ } resolve({state:'timeout', status:0, ms:timeoutMs}); }, timeoutMs||5000);
     var t0 = Date.now();
-    if (!window._pingEnabled){ try{ ctrl && ctrl.abort(); }catch(_){ } return resolve({state:'skipped', status:0, ms:0}); }
     fetch(url, { method:'HEAD', signal: ctrl?ctrl.signal:undefined, cache:'no-store' })
       .then(function(r){
         clearTimeout(t);
@@ -1508,9 +1421,7 @@ function pingUrl(url, timeoutMs){
       })
       .catch(function(){
         var ctrl2 = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-        try{ if (ctrl2) (window._pingControllers = window._pingControllers||[]).push(ctrl2); }catch(_){}
         var t2 = setTimeout(function(){ try{ ctrl2 && ctrl2.abort(); }catch(_){ } resolve({state:'timeout', status:0, ms:(Date.now()-t0)}); }, timeoutMs||5000);
-        if (!window._pingEnabled){ try{ ctrl2 && ctrl2.abort(); }catch(_){ } return resolve({state:'skipped', status:0, ms:0}); }
         fetch(url, { method:'GET', signal: ctrl2?ctrl2.signal:undefined, cache:'no-store', mode:'no-cors' })
           .then(function(r){
             clearTimeout(t2);
@@ -1574,18 +1485,9 @@ function pingVisibleList(concurrency){
   var btn = document.createElement('button');
   btn.id = 'btnVerifyLinks';
   btn.textContent = 'Vérifier les liens';
-  var stopBtn = document.createElement('button');
-  stopBtn.id='btnStopPing'; stopBtn.textContent='Stop ping'; stopBtn.title='Arrêter toutes les vérifications'; stopBtn.style.margin='6px';
-  stopBtn.onclick = function(){ try{ window.suspendPings && window.suspendPings(); }catch(_){} };
-  tabs.parentNode.insertBefore(stopBtn, tabs.nextSibling);
   btn.title = 'Ping des liens visibles';
   btn.style.margin = '6px';
-  btn.onclick = function(){ (function(){
-        var ps = document.getElementById('playerSection');
-        if (!ps || !ps.classList.contains('playing')) {
-          pingVisibleList(2);
-        }
-      })(); };
+  btn.onclick = function(){ pingVisibleList(6); };
   tabs.parentNode.insertBefore(btn, tabs.nextSibling);
 })();
 
