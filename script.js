@@ -126,19 +126,23 @@ function playDash(url){
   var v = document.getElementById('videoPlayer');
   if (!v) return;
   v.style.display = 'block';
-  try { setPlaying(true); } catch(_){}
+  try { setPlaying(true); } catch(_){ }
   var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
   if (MP && typeof MP.create === 'function') {
     try {
       var p = MP.create();
       window.currentDash = p;
       p.initialize(v, url, true);
+      try {
+        var ev = window.dashjs.MediaPlayer.events;
+        p.on && p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED || 'streamInitialized', function(){ try { v.play().catch(()=>{}); } catch(_){} });
+      } catch(_){ }
     } catch(e){ console.error('[DASH:init]', e); }
   } else {
     console.error('[DASH] dash.js indisponible');
     return;
   }
-  try { updateNowBar(undefined, url); } catch(_){}
+  try { updateNowBar(undefined, url); } catch(_){ }
 }
 function playVideo(url){
   try{ window.suspendPings && window.suspendPings(); }catch(_){}
@@ -202,17 +206,18 @@ function playByType(url){
   // HLS (m3u8)
   if (isHLS && v){
     v.style.display = 'block';
-    if (window.Hls && window.Hls.isSupported()){
+    if (window.Hls && window.Hls.isSupported()) {
       try {
         const hls = new Hls({ enableWorker: true });
         window.currentHls = hls;
         hls.attachMedia(v);
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(u));
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { try { v.muted = false; v.play().catch(()=>{}); } catch(_){} });
       } catch(_){}
     } else {
       v.src = u; // Safari natif
+      v.addEventListener('loadedmetadata', function once(){ v.removeEventListener('loadedmetadata', once); try { v.play().catch(()=>{}); } catch(_){} });
     }
-    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
     showPlaying(); return;
   }
 
@@ -587,7 +592,22 @@ function updatePlayerLayout() {
 // Appels initiaux + écoute redimensionnement/orientation
 window.addEventListener('resize', updatePlayerLayout);
 window.addEventListener('orientationchange', updatePlayerLayout);
-document.addEventListener('DOMContentLoaded', updatePlayerLayout);
+
+// --- Video error diagnostics ---
+(function videoPlayerErrorHook(){
+  try{
+    var v = document.getElementById('videoPlayer');
+    if (!v || v.__errHook) return;
+    v.__errHook = true;
+    v.addEventListener('error', function(){
+      var e = v.error || {};
+      var map = { 1:'ABORTED', 2:'NETWORK', 3:'DECODE', 4:'SRC_NOT_SUPPORTED' };
+      var t = '[VIDEO ERROR] code=' + (e.code||0) + ' (' + (map[e.code]||'') + ')';
+      try { console.error(t, e); } catch(_){}
+      try { showToast && showToast('Erreur vidéo: ' + (map[e.code]||e.code)); } catch(_){}
+    });
+  }catch(_){}
+})();document.addEventListener('DOMContentLoaded', updatePlayerLayout);
 // petit tick pour after-paint (polices chargées etc.)
 setTimeout(updatePlayerLayout, 50);
 
