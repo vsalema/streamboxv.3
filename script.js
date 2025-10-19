@@ -123,26 +123,37 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   var v = document.getElementById('videoPlayer');
   if (!v) return;
-  v.style.display = 'block';
-  try { setPlaying(true); } catch(_){ }
+  try { v.style.display = 'block'; } catch(_){}
+  try { setPlaying && setPlaying(true); } catch(_){}
   var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
-  if (MP && typeof MP.create === 'function') {
+  if (!(MP && typeof MP.create === 'function')) {
+    try { showToast && showToast('dash.js indisponible'); } catch(_){}
+    return; // NE PAS faire v.src=url pour MPD
+  }
+  try {
+    if (window.currentDash && window.currentDash.reset) { try{ window.currentDash.reset(); }catch(_){ } }
+    var p = MP.create();
+    window.currentDash = p;
+    p.initialize(v, url, true);
     try {
-      var p = MP.create();
-      window.currentDash = p;
-      p.initialize(v, url, true);
-      try {
-        var ev = window.dashjs.MediaPlayer.events;
-        p.on && p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED || 'streamInitialized', function(){ try { v.play().catch(()=>{}); } catch(_){} });
-      } catch(_){ }
-    } catch(e){ console.error('[DASH:init]', e); }
-  } else {
-    console.error('[DASH] dash.js indisponible');
+      var ev = window.dashjs.MediaPlayer.events;
+      p.on && p.on(ev.ERROR, function(e){ try{ console.error('[dash.js ERROR]', e); showToast && showToast('dash.js error'); }catch(_){} });
+    } catch(_){ }
+    try {
+      var ev = window.dashjs.MediaPlayer.events;
+      p.on && p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED, function(){
+        try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+      });
+    } catch(_){}
+  } catch(e) {
+    try { console.error('[playDash:init]', e); } catch(_){}
+    // NE PAS faire v.src=url
     return;
   }
-  try { updateNowBar(undefined, url); } catch(_){ }
+  try { updateNowBar && updateNowBar(undefined, url); } catch(_){}
 }
 function playVideo(url){
   try{ window.suspendPings && window.suspendPings(); }catch(_){}
@@ -607,7 +618,32 @@ window.addEventListener('orientationchange', updatePlayerLayout);
       try { showToast && showToast('Erreur vidéo: ' + (map[e.code]||e.code)); } catch(_){}
     });
   }catch(_){}
-})();document.addEventListener('DOMContentLoaded', updatePlayerLayout);
+})();
+// --- Guard: empêcher l'affectation native de MPD à <video>.src ---
+(function guardNativeMPD(){
+  try{
+    var v = document.getElementById('videoPlayer');
+    if (!v || v.__mpdGuard) return; v.__mpdGuard = true;
+    try { v.crossOrigin = 'anonymous'; } catch(_){}
+    var desc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'src');
+    if (desc && desc.set) {
+      var origSet = desc.set.bind(v);
+      Object.defineProperty(v, 'src', {
+        configurable: true,
+        enumerable: false,
+        set: function(val){
+          if (typeof val === 'string' && /\.mpd(\?|$)/i.test(val)){
+            console.warn('[Guard] bloc MPD en natif:', val);
+            try { showToast && showToast('MPD pris en charge via dash.js'); } catch(_){}
+            return; // ne pas assigner
+          }
+          return origSet(val);
+        }
+      });
+    }
+  }catch(e){ try{ console.error('[Guard error]', e);}catch(_){ } }
+})();
+document.addEventListener('DOMContentLoaded', updatePlayerLayout);
 // petit tick pour after-paint (polices chargées etc.)
 setTimeout(updatePlayerLayout, 50);
 
@@ -783,30 +819,36 @@ function playHls(url){
 
 function playDash(url){
   try{ window.suspendPings && window.suspendPings(); }catch(_){}
-  try { video.style.display = 'block'; } catch(e){}
-  try { if (typeof setPlaying === 'function') setPlaying(true); } catch(e){}
-
-  try {
-    var DASH = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
-    if (DASH && typeof DASH.create === 'function') {
-      try { if (window.currentDash && window.currentDash.reset) window.currentDash.reset(); } catch(_){}
-      var p = DASH.create();
-      window.currentDash = p;
-      p.initialize(video, url, true);
-      try {
-        p.on(window.dashjs.MediaPlayer.events.STREAM_INITIALIZED, function(){ try { renderAudioMenu(); } catch(_){ } });
-        p.on(window.dashjs.MediaPlayer.events.AUDIO_TRACK_CHANGED, function(){ try { highlightCurrentAudio(); } catch(_){ } });
-      } catch(_){}
-    } else {
-      video.src = url; // fallback
-      video.addEventListener('loadedmetadata', function(){ try { renderAudioMenu(); } catch(_){ } }, { once:true });
-    }
-  } catch (e) {
-    try { console.error('[playDash]', e); } catch(_){}
-    try { video.src = url; } catch(_){}
+  var v = document.getElementById('videoPlayer');
+  if (!v) return;
+  try { v.style.display = 'block'; } catch(_){}
+  try { setPlaying && setPlaying(true); } catch(_){}
+  var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
+  if (!(MP && typeof MP.create === 'function')) {
+    try { showToast && showToast('dash.js indisponible'); } catch(_){}
+    return; // NE PAS faire v.src=url pour MPD
   }
-
-  try { updateNowBar(undefined, url); } catch(_){}
+  try {
+    if (window.currentDash && window.currentDash.reset) { try{ window.currentDash.reset(); }catch(_){ } }
+    var p = MP.create();
+    window.currentDash = p;
+    p.initialize(v, url, true);
+    try {
+      var ev = window.dashjs.MediaPlayer.events;
+      p.on && p.on(ev.ERROR, function(e){ try{ console.error('[dash.js ERROR]', e); showToast && showToast('dash.js error'); }catch(_){} });
+    } catch(_){ }
+    try {
+      var ev = window.dashjs.MediaPlayer.events;
+      p.on && p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED, function(){
+        try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+      });
+    } catch(_){}
+  } catch(e) {
+    try { console.error('[playDash:init]', e); } catch(_){}
+    // NE PAS faire v.src=url
+    return;
+  }
+  try { updateNowBar && updateNowBar(undefined, url); } catch(_){}
 }
 
 /* 2) Helpers: lister/sélectionner pistes (HLS/DASH/natif) */
