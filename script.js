@@ -222,14 +222,10 @@ function playByType(url){
     showPlaying(); return;
   }
 
-// fallback → tente dans la <video>
-  if (v){
-    v.src = u;
-    v.style.display = 'block';
-    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
-    showPlaying();
-  }
+// fallback → détection automatique HLS/DASH
+  try { smartPlay(u); } catch(e) { try{ showToast('Erreur lecture'); }catch(_){ } }
 }
+
 
 
 
@@ -245,6 +241,45 @@ window.suspendPings = function(){
   } catch(e){}
 };
 window.resumePings = function(){ window._pingEnabled = true; };
+
+// --- Smart fallback when type unknown ---
+function smartPlay(u){
+  try{ resetPlayers && resetPlayers(); }catch(_){}
+  var v = document.getElementById('videoPlayer');
+  var ps = document.getElementById('playerSection');
+  if (!v) return;
+  v.style.display = 'block';
+  try{ setPlaying && setPlaying(true); }catch(_){}
+  function tryNative(){
+    try{ v.removeAttribute('src'); v.load(); }catch(_){}
+    try{ showToast && showToast('Flux non reconnu'); }catch(_){}
+    try{ setPlaying && setPlaying(false); }catch(_){}
+  }
+  function tryDash(){
+    if (!(window.dashjs && window.dashjs.MediaPlayer)) return tryNative();
+    try{
+      if (window.currentDash){ try{ window.currentDash.reset(); }catch(_){ } window.currentDash = null; }
+      var p = window.dashjs.MediaPlayer().create();
+      window.currentDash = p;
+      p.initialize(v, u, true);
+      // on error fallback to native
+      try{ p.on && p.on(window.dashjs.MediaPlayer.events.ERROR, function(){ try{ p.reset(); }catch(_){ } tryNative(); }); }catch(_){}
+    }catch(e){ tryNative(); }
+  }
+  function tryHls(){
+    if (!(window.Hls && window.Hls.isSupported())) return tryDash();
+    try{
+      if (window.currentHls){ try{ window.currentHls.destroy(); }catch(_){ } window.currentHls = null; }
+      var hls = new Hls({ enableWorker: true });
+      window.currentHls = hls;
+      hls.attachMedia(v);
+      hls.on(Hls.Events.MEDIA_ATTACHED, function(){ try{ hls.loadSource(u); }catch(_){ tryDash(); } });
+      hls.on(Hls.Events.ERROR, function(evt, data){ if (data && data.fatal){ try{ hls.destroy(); }catch(_){ } tryDash(); } });
+    }catch(e){ tryDash(); }
+  }
+  tryHls();
+  try{ if (ps) ps.classList.add('playing'); }catch(_){}
+}
 // --- M3U ---
 function parseM3U(text){
   text = String(text||'').replace(/^\uFEFF/, '');
