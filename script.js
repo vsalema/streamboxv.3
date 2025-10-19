@@ -101,6 +101,7 @@ function updateNowBar(nameOrUrl, url){
 
 // --- Players ---
 function playHls(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   video.style.display = 'block';
   setPlaying(true);
   try {
@@ -122,6 +123,7 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   video.style.display = 'block';
   setPlaying(true);
   const DASH = window.dashjs?.MediaPlayer;
@@ -134,6 +136,7 @@ function playDash(url){
   updateNowBar(undefined, url);
 }
 function playVideo(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   video.style.display = 'block';
   setPlaying(true);
   video.src = url;
@@ -152,6 +155,7 @@ function playYouTube(url){
   updateNowBar(undefined, url);
 }
 function playByType(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   const v  = document.getElementById('videoPlayer');
   const yt = document.getElementById('ytPlayer');
   const au = document.getElementById('audioPlayer');
@@ -223,6 +227,19 @@ function playByType(url){
 }
 
 
+
+// === Ping management helpers ===
+window._pingEnabled = true;
+window._pingControllers = [];
+window.suspendPings = function(){
+  try {
+    window._pingEnabled = false;
+    var arr = window._pingControllers || [];
+    for (var i=0;i<arr.length;i++){ try{ arr[i].abort && arr[i].abort(); }catch(e){} }
+    window._pingControllers = [];
+  } catch(e){}
+};
+window.resumePings = function(){ window._pingEnabled = true; };
 // --- M3U ---
 function parseM3U(text){
   text = String(text||'').replace(/^\uFEFF/, '');
@@ -441,18 +458,8 @@ function renderList(){
   });
 
   // Ping des liens visibles (optionnel)
-  try {
-    if (typeof pingVisibleList === 'function' && (mode === 'channels' || mode === 'history')) {
-      (function(){
-        var ps = document.getElementById('playerSection');
-        if (!ps || !ps.classList.contains('playing')) {
-          pingVisibleList(2);
-        }
-      })();
-    }
-  } catch(_){}
-
-  if (!data.length) {
+  // Ping auto désactivé
+if (!data.length) {
     listDiv.innerHTML += '<p style="opacity:.6;padding:10px;">Aucune donnée.</p>';
   }
 }
@@ -678,6 +685,7 @@ if (typeof window.__orig_resetPlayers__ === 'undefined' && typeof resetPlayers =
 
 /* 1) Repatch playHls / playDash (robustes, sans syntaxe “moderne”) */
 function playHls(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   try { video.style.display = 'block'; } catch(e){}
   try { if (typeof setPlaying === 'function') setPlaying(true); } catch(e){}
 
@@ -714,6 +722,7 @@ function playHls(url){
 }
 
 function playDash(url){
+  try{ window.suspendPings && window.suspendPings(); }catch(_){}
   try { video.style.display = 'block'; } catch(e){}
   try { if (typeof setPlaying === 'function') setPlaying(true); } catch(e){}
 
@@ -1386,8 +1395,10 @@ function highlightCurrentSubs(){
 function pingUrl(url, timeoutMs){
   return new Promise(function(resolve){
     var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    try{ if (ctrl) (window._pingControllers = window._pingControllers||[]).push(ctrl); }catch(_){}
     var t = setTimeout(function(){ try{ ctrl && ctrl.abort(); }catch(_){ } resolve({state:'timeout', status:0, ms:timeoutMs}); }, timeoutMs||5000);
     var t0 = Date.now();
+    if (!window._pingEnabled){ try{ ctrl && ctrl.abort(); }catch(_){ } return resolve({state:'skipped', status:0, ms:0}); }
     fetch(url, { method:'HEAD', signal: ctrl?ctrl.signal:undefined, cache:'no-store' })
       .then(function(r){
         clearTimeout(t);
@@ -1395,7 +1406,9 @@ function pingUrl(url, timeoutMs){
       })
       .catch(function(){
         var ctrl2 = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        try{ if (ctrl2) (window._pingControllers = window._pingControllers||[]).push(ctrl2); }catch(_){}
         var t2 = setTimeout(function(){ try{ ctrl2 && ctrl2.abort(); }catch(_){ } resolve({state:'timeout', status:0, ms:(Date.now()-t0)}); }, timeoutMs||5000);
+        if (!window._pingEnabled){ try{ ctrl2 && ctrl2.abort(); }catch(_){ } return resolve({state:'skipped', status:0, ms:0}); }
         fetch(url, { method:'GET', signal: ctrl2?ctrl2.signal:undefined, cache:'no-store', mode:'no-cors' })
           .then(function(r){
             clearTimeout(t2);
@@ -1459,6 +1472,10 @@ function pingVisibleList(concurrency){
   var btn = document.createElement('button');
   btn.id = 'btnVerifyLinks';
   btn.textContent = 'Vérifier les liens';
+  var stopBtn = document.createElement('button');
+  stopBtn.id='btnStopPing'; stopBtn.textContent='Stop ping'; stopBtn.title='Arrêter toutes les vérifications'; stopBtn.style.margin='6px';
+  stopBtn.onclick = function(){ try{ window.suspendPings && window.suspendPings(); }catch(_){} };
+  tabs.parentNode.insertBefore(stopBtn, tabs.nextSibling);
   btn.title = 'Ping des liens visibles';
   btn.style.margin = '6px';
   btn.onclick = function(){ (function(){
