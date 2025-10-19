@@ -122,36 +122,16 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
-  console.log('[playDash] init', url);
-  var v = document.getElementById('videoPlayer');
-  if (!v) { console.error('[playDash] video element missing'); return; }
-  try { v.style.display = 'block'; } catch(_){}
-  try { setPlaying && setPlaying(true); } catch(_){}
-  var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
-  if (!(MP && typeof MP.create === 'function')) {
-    console.error('[playDash] dash.js not available');
-    return;
+  video.style.display = 'block';
+  setPlaying(true);
+  const DASH = window.dashjs?.MediaPlayer;
+  if (DASH && typeof DASH.create === 'function') {
+    const p = DASH.create();
+    p.initialize(video, url, true);
+  } else {
+    video.src = url; // fallback
   }
-  try {
-    if (window.currentDash && window.currentDash.reset) { try{ window.currentDash.reset(); }catch(_){ } }
-    var p = MP.create();
-    window.currentDash = p;
-    p.initialize(v, url, true);
-    try {
-      var ev = window.dashjs.MediaPlayer.events;
-      if (p.on && ev) {
-        p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED || ev.CAN_PLAY, function(){ 
-          console.log('[playDash] ready, requesting play()');
-          try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
-        });
-        p.on(ev.ERROR, function(e){ console.error('[dash.js ERROR]', e); });
-      }
-    } catch(_){ }
-  } catch(e) {
-    console.error('[playDash:init]', e);
-    return;
-  }
-  try { updateNowBar && updateNowBar(undefined, url); } catch(_){}
+  updateNowBar(undefined, url);
 }
 function playVideo(url){
   video.style.display = 'block';
@@ -734,36 +714,30 @@ function playHls(url){
 }
 
 function playDash(url){
-  console.log('[playDash] init', url);
-  var v = document.getElementById('videoPlayer');
-  if (!v) { console.error('[playDash] video element missing'); return; }
-  try { v.style.display = 'block'; } catch(_){}
-  try { setPlaying && setPlaying(true); } catch(_){}
-  var MP = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
-  if (!(MP && typeof MP.create === 'function')) {
-    console.error('[playDash] dash.js not available');
-    return;
-  }
+  try { video.style.display = 'block'; } catch(e){}
+  try { if (typeof setPlaying === 'function') setPlaying(true); } catch(e){}
+
   try {
-    if (window.currentDash && window.currentDash.reset) { try{ window.currentDash.reset(); }catch(_){ } }
-    var p = MP.create();
-    window.currentDash = p;
-    p.initialize(v, url, true);
-    try {
-      var ev = window.dashjs.MediaPlayer.events;
-      if (p.on && ev) {
-        p.on(ev.MANIFEST_LOADED || ev.STREAM_INITIALIZED || ev.CAN_PLAY, function(){ 
-          console.log('[playDash] ready, requesting play()');
-          try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
-        });
-        p.on(ev.ERROR, function(e){ console.error('[dash.js ERROR]', e); });
-      }
-    } catch(_){ }
-  } catch(e) {
-    console.error('[playDash:init]', e);
-    return;
+    var DASH = (window.dashjs && window.dashjs.MediaPlayer) ? window.dashjs.MediaPlayer : null;
+    if (DASH && typeof DASH.create === 'function') {
+      try { if (window.currentDash && window.currentDash.reset) window.currentDash.reset(); } catch(_){}
+      var p = DASH.create();
+      window.currentDash = p;
+      p.initialize(video, url, true);
+      try {
+        p.on(window.dashjs.MediaPlayer.events.STREAM_INITIALIZED, function(){ try { renderAudioMenu(); } catch(_){ } });
+        p.on(window.dashjs.MediaPlayer.events.AUDIO_TRACK_CHANGED, function(){ try { highlightCurrentAudio(); } catch(_){ } });
+      } catch(_){}
+    } else {
+      video.src = url; // fallback
+      video.addEventListener('loadedmetadata', function(){ try { renderAudioMenu(); } catch(_){ } }, { once:true });
+    }
+  } catch (e) {
+    try { console.error('[playDash]', e); } catch(_){}
+    try { video.src = url; } catch(_){}
   }
-  try { updateNowBar && updateNowBar(undefined, url); } catch(_){}
+
+  try { updateNowBar(undefined, url); } catch(_){}
 }
 
 /* 2) Helpers: lister/sélectionner pistes (HLS/DASH/natif) */
