@@ -208,17 +208,12 @@ function playByType(url){
   }
 
   // DASH (mpd)
-  if (isDASH && v && window.dashjs){
-    v.style.display = 'block';
-    try {
-      const p = dashjs.MediaPlayer().create();
-      window.currentDash = p;
-      p.initialize(v, u, true);
-    } catch(_){}
+  if (isDASH){
+    try { playDash(u); } catch(_) {}
     showPlaying(); return;
   }
 
-  // fallback → tente dans la <video>
+// fallback → tente dans la <video>
   if (v){
     v.src = u;
     v.style.display = 'block';
@@ -448,7 +443,12 @@ function renderList(){
   // Ping des liens visibles (optionnel)
   try {
     if (typeof pingVisibleList === 'function' && (mode === 'channels' || mode === 'history')) {
-      pingVisibleList(6);
+      (function(){
+        var ps = document.getElementById('playerSection');
+        if (!ps || !ps.classList.contains('playing')) {
+          pingVisibleList(2);
+        }
+      })();
     }
   } catch(_){}
 
@@ -1461,7 +1461,12 @@ function pingVisibleList(concurrency){
   btn.textContent = 'Vérifier les liens';
   btn.title = 'Ping des liens visibles';
   btn.style.margin = '6px';
-  btn.onclick = function(){ pingVisibleList(6); };
+  btn.onclick = function(){ (function(){
+        var ps = document.getElementById('playerSection');
+        if (!ps || !ps.classList.contains('playing')) {
+          pingVisibleList(2);
+        }
+      })(); };
   tabs.parentNode.insertBefore(btn, tabs.nextSibling);
 })();
 
