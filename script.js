@@ -122,7 +122,7 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
-  try { video.loop = false; } catch(e){}
+  try { video.loop = true; } catch(e){}
 
   video.style.display = 'block';
   setPlaying(true);
