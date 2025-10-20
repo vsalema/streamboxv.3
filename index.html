@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IPTV Player Web+ v2.3</title>
+   <script src="https://cdn.dashjs.org/latest/dash.all.min.js" defer></script>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="custom.crystal.css">
@@ -50,7 +51,7 @@
     </aside>
 
     <section id="playerSection">
-      <video id="videoPlayer" controls autoplay loop playsinline></video>
+      <video data-dashjs-player id="videoPlayer" controls autoplay loop playsinline></video>
       <iframe id="ytPlayer" allowfullscreen></iframe>
       <audio id="audioPlayer" controls></audio>
       <div id="noSource">Colle une URL ou choisis une liste pour commencer 🎬</div>
