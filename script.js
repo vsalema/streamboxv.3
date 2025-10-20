@@ -122,7 +122,7 @@ function playHls(url){
   updateNowBar(undefined, url);
 }
 function playDash(url){
-  try { video.loop = true; } catch(e){}
+  try { video.loop = false; } catch(e){}
 
   video.style.display = 'block';
   setPlaying(true);
@@ -167,6 +167,63 @@ function playByType(url){
   const isDASH= /\.mpd($|\?)/i.test(u);
 
   function showPlaying(){ if (ps) ps.classList.add('playing'); }
+
+  // YouTube
+  if (isYouTube && yt){
+    yt.src = u.replace('watch?v=','embed/').replace('&t=','?start=');
+    yt.allow = 'autoplay; encrypted-media; picture-in-picture';
+    yt.style.display = 'block';
+    showPlaying(); return;
+  }
+
+  // Audio MP3
+  if (isMP3 && au){
+    au.src = u;
+    au.style.display = 'block';
+    try { au.play().catch(()=>{}); } catch(_){}
+    showPlaying(); return;
+  }
+
+  // MP4
+  if (isMP4 && v){
+    v.src = u;
+    v.style.display = 'block';
+    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+    showPlaying(); return;
+  }
+
+  // HLS
+  if (isHLS && v){
+    v.style.display = 'block';
+    if (window.Hls && window.Hls.isSupported){
+      try {
+        const hls = new Hls({ enableWorker: true });
+        window.currentHls = hls;
+        hls.attachMedia(v);
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(u));
+      } catch(_){}
+    } else {
+      v.src = u;
+    }
+    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+    showPlaying(); return;
+  }
+
+  // DASH
+  if (isDASH && v){
+    // Route obligatoirement via playDash
+    try { playDash(u); } catch(_){ v.src = u; }
+    showPlaying(); return;
+  }
+
+  // Fallback
+  if (v){
+    v.src = u;
+    v.style.display = 'block';
+    try { v.muted = false; v.play().catch(()=>{}); } catch(_){}
+    showPlaying();
+  }
+}
 
   // YouTube (iframe)
   if (isYouTube && yt){
@@ -215,7 +272,7 @@ function playByType(url){
     showPlaying();
     return;
   }
-  
+  }
 
   // fallback → tente dans la <video>
   if (v){
@@ -715,6 +772,8 @@ function playHls(url){
 }
 
 function playDash(url){
+  try { video.loop = false; } catch(e){}
+
   try { video.style.display = 'block'; } catch(e){}
   try { if (typeof setPlaying === 'function') setPlaying(true); } catch(e){}
 
@@ -1673,7 +1732,7 @@ const Zapper = (() => {
     try { if (typeof addHistory === 'function') addHistory(ch.url); } catch(_){}
     try {
       const v = document.getElementById('videoPlayer');
-      if (v && v.style.display === 'block' && !/\.mpd($|\?)/i.test(ch.url)) {
+      if (v && v.style.display === 'block' && !/\.mpd($|\?)/i.test(item.url)) {
         v.muted = true;
         const p = v.play();
         if (p && p.catch) p.catch(()=>{});
